@@ -113,6 +113,11 @@ def saveResult(save_path, npyfile, flag_multi_class=False, num_class=2):
             if flag_multi_class
             else item[:, :, 0]
         )
+
+        # NOTE: Added by Christian.
+        img = Image.fromarray((img * 255.0).astype(np.uint8))
+        img = np.array(img)
+
         io.imsave(os.path.join(save_path, "{}.png".format(i)), img)
 
 

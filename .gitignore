@@ -21,3 +21,17 @@ mesonet/*_old.py
 
 # test results
 tests/results/
+
+*.png
+*.mat
+*.csv
+*.npy
+
+mesonet_inputs/
+mesonet_outputs/
+
+**/.DS_Store
+
+**/__pycache__/
+
+mesonet/dlc/**
