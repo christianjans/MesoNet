@@ -36,3 +36,9 @@ mesonet_training*/
 **/__pycache__/
 
 mesonet/dlc/**
+
+.venv/
+
+.python-version
+
+models/
