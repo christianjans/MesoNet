@@ -29,6 +29,7 @@ tests/results/
 
 mesonet_inputs/
 mesonet_outputs/
+mesonet_training*/
 
 **/.DS_Store
 
