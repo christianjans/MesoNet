@@ -39,3 +39,6 @@ RUN sudo pip3 install 'deeplabcut[gui,tf]'
 RUN sudo python3 setup.py install
 
 ENV LD_PRELOAD=/usr/local/lib/python3.8/dist-packages/torch/lib/libgomp-d22c30c5.so.1
+
+RUN sudo pip3 uninstall mesonet -y
+ENV PYTHONPATH=/repo:/repo/mesonet
