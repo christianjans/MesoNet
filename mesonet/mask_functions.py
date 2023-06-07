@@ -18,6 +18,7 @@ import imageio
 import imutils
 import scipy
 import pylab
+import pickle
 from PIL import Image
 import pandas as pd
 from tensorflow.keras import backend as k
@@ -559,6 +560,14 @@ def applyMask(
                     atlas_bw.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
                 )
                 cnts_orig = imutils.grab_contours(cnts_orig)
+
+            # NOTE: Added by Christian. Save the contour points so that they can
+            #  be used after prediction for determining the brain regions.
+            if not os.path.exists("contour_points.pkl"):
+                with open("contour_points.pkl", "wb") as f:
+                    print("Saving contours")
+                    pickle.dump(cnts_orig, f)
+
             if not use_dlc:
                 cnts_orig, hierarchy = cv2.findContours(
                     atlas_bw.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
