@@ -13,14 +13,16 @@ class MultiImageTiff:
         self.image_size = (self.image.tag[0x101][0], self.image.tag[0x100][0])
         self.current = self.image.tell()
 
-    def get_frame(self, frame: int) -> np.array:
+    def get_frame(self, frame: int, map_to_255: bool = True) -> np.array:
         try:
             self.image.seek(frame)
         except EOFError:
             return None
         self.current = self.image.tell()
-        mapped_image_array = self._map_image_to_255(self.image.getdata())
-        return np.reshape(mapped_image_array, self.image_size)
+        image_array = self.image.getdata()
+        if map_to_255:
+            image_array = self._map_image_to_255(image_array)
+        return np.reshape(image_array, self.image_size)
 
     def __iter__(self):
         self.image.seek(0)
@@ -28,7 +30,7 @@ class MultiImageTiff:
         self.current = self.image.tell()
         return self
     
-    def next(self) -> np.array:
+    def next(self, map_to_255: bool = True) -> np.array:
         try:
             self.image.seek(self.current)
             self.current = self.image.tell() + 1
@@ -36,8 +38,10 @@ class MultiImageTiff:
             self.image.seek(self.old)
             self.current = self.image.tell()
             raise StopIteration
-        mapped_image_array = self._map_image_to_255(self.image.getdata())
-        return np.reshape(mapped_image_array, self.image_size)
+        image_array = self.image.getdata()
+        if map_to_255:
+            image_array = self._map_image_to_255(image_array)
+        return np.reshape(image_array, self.image_size)
     
     def _map_image_to_255(self, image: PIL.Image) -> np.array:
         image_array = np.array(image)
