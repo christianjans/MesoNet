@@ -30,7 +30,7 @@ class MultiImageTiff:
         self.current = self.image.tell()
         return self
     
-    def next(self, map_to_255: bool = True) -> np.array:
+    def __next__(self, map_to_255: bool = True) -> np.array:
         try:
             self.image.seek(self.current)
             self.current = self.image.tell() + 1
