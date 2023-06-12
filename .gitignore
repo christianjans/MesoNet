@@ -42,3 +42,5 @@ mesonet/dlc/**
 .python-version
 
 models/
+
+*.pkl
