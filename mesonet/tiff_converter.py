@@ -1,3 +1,6 @@
+import argparse
+import os
+
 import numpy as np
 import PIL.Image
 
@@ -46,14 +49,27 @@ class MultiImageTiff:
         return mapped_image_array.astype(np.uint8)
 
 
-if __name__ == "__main__":
-    print("loading")
-    t = MultiImageTiff("/Users/christian/Documents/summer2023/matlab/my_data/04_awake_8x8_30hz_36500fr.tif")
-    print(t.get_frame(0))
-    print(t.get_frame(0).dtype)
-    print(t.get_frame(0).shape)
-    print("done")
+def main(args):
+    tiff_image = MultiImageTiff(args.tiff_image_file)
 
-    image_array = t.get_frame(0)
-    image = PIL.Image.fromarray(image_array)
-    image.save("./mesonet_inputs/pipeline_data/atlas_brain/0.png")
+    for image_to_save in args.images_to_save:
+        image_array = tiff_image.get_frame(image_to_save)
+        image = PIL.Image.fromarray(image_array)
+        image.save(os.path.join(args.save_dir, f"{image_to_save}.png"))
+
+
+if __name__ == "__main__":
+    """
+    python mesonet/tiff_converter.py \
+        --tiff-image-file ./../matlab/my_data/04_awake_8x8_30hz_36500fr.tif \
+        --images-to-save 0 6000 12000 18000 24000 \
+        --save-dir ./mesonet_inputs/awake_data/atlas_brain
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tiff-image-file", type=str, required=True)
+    parser.add_argument("--images-to-save", type=int, nargs="+", required=True)
+    parser.add_argument("--save-dir", type=str, required=True)
+    args = parser.parse_args()
+
+    main(args)
