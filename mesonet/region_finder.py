@@ -5,6 +5,7 @@ import pickle
 from typing import Dict, Set, Tuple
 
 
+# TODO: What if the region consists of only contour points?
 def find_points_in_regions(start_points_in_regions: Dict[int, Tuple[int, int]],
                            contour_points: Set[Tuple[int, int]],
                            width: int,
