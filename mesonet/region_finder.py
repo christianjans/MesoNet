@@ -5,6 +5,9 @@ import pickle
 from typing import Dict, Set, Tuple
 
 
+# NOTE: This is no longer needed. Regions are determined while processing the
+#  images in a more robust way so that no part of the region is missed.
+
 # TODO: What if the region consists of only contour points?
 def find_points_in_regions(start_points_in_regions: Dict[int, Tuple[int, int]],
                            contour_points: Set[Tuple[int, int]],
