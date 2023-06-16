@@ -478,6 +478,9 @@ def applyMask(
             orig_list_labels_right = []
             # unique_regions = (np.unique(atlas_label)).tolist()
             # unique_regions = [e for e in unique_regions if e.is_integer()]
+
+            # These are the colours of the different regions in
+            # atlases/diff_colour_regions/atlas.csv.
             unique_regions = [
                 -275,
                 -268,
@@ -524,6 +527,10 @@ def applyMask(
                 400,
             ]
             cnts_orig = []
+
+            regions = []  # NOTE: Added by Christian.
+            region_pixels = {}  # NOTE: Added by Christian.
+
             # Find contours in original aligned atlas
             if atlas_to_brain_align and not original_label:
                 np.savetxt(
@@ -555,18 +562,12 @@ def applyMask(
                     if len(cnt_for_idx) >= 1:
                         cnts_orig.append(cnt_for_idx)
                         labels_from_region.append(region_idx)
+                        regions.append(region)  # NOTE: Added by Christian.
             else:
                 cnts_orig = cv2.findContours(
                     atlas_bw.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
                 )
                 cnts_orig = imutils.grab_contours(cnts_orig)
-
-            # NOTE: Added by Christian. Save the contour points so that they can
-            #  be used after prediction for determining the brain regions.
-            if not os.path.exists("contour_points.pkl"):
-                with open("contour_points.pkl", "wb") as f:
-                    print("Saving contours")
-                    pickle.dump(cnts_orig, f)
 
             if not use_dlc:
                 cnts_orig, hierarchy = cv2.findContours(
@@ -591,6 +592,17 @@ def applyMask(
 
                 if not original_label and atlas_to_brain_align:
                     label_to_use = unique_regions.index(labels_from_region[num_label])
+
+                    # NOTE: Added by Christian. Associate all non-zero pixels in
+                    #  the current region to the current label.
+                    region_pixels.update(
+                        {
+                            (x, y): label_to_use
+                            for y, x  # In the array, we have (y, x); in coordinates, we want (x, y).
+                            in zip(*np.where(regions[num_label] > 0))
+                        }
+                    )
+
                     (text_width, text_height) = cv2.getTextSize(
                         str(label_to_use), cv2.FONT_HERSHEY_SIMPLEX, 0.4, thickness=1
                     )[0]
@@ -641,6 +653,13 @@ def applyMask(
                         )
                     )
                 orig_list.sort()
+
+            # NOTE: Added by Christian.
+            if not os.path.exists("region_pixels.pkl"):
+                with open("region_pixels.pkl", "wb") as f:
+                    print("Saving region pixels")
+                    pickle.dump(region_pixels, f)
+
             orig_list_labels_sorted_left = sorted(
                 orig_list_labels_left, key=lambda t: t[0], reverse=True
             )
