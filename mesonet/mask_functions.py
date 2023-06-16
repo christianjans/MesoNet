@@ -529,7 +529,7 @@ def applyMask(
             cnts_orig = []
 
             regions = []  # NOTE: Added by Christian.
-            region_pixels = {}  # NOTE: Added by Christian.
+            region_points = {}  # NOTE: Added by Christian.
 
             # Find contours in original aligned atlas
             if atlas_to_brain_align and not original_label:
@@ -595,7 +595,7 @@ def applyMask(
 
                     # NOTE: Added by Christian. Associate all non-zero pixels in
                     #  the current region to the current label.
-                    region_pixels.update(
+                    region_points.update(
                         {
                             (x, y): label_to_use
                             for y, x  # In the array, we have (y, x); in coordinates, we want (x, y).
@@ -655,10 +655,10 @@ def applyMask(
                 orig_list.sort()
 
             # NOTE: Added by Christian.
-            if not os.path.exists("region_pixels.pkl"):
-                with open("region_pixels.pkl", "wb") as f:
+            if not os.path.exists("region_points.pkl"):
+                with open("region_points.pkl", "wb") as f:
                     print("Saving region pixels")
-                    pickle.dump(region_pixels, f)
+                    pickle.dump(region_points, f)
 
             orig_list_labels_sorted_left = sorted(
                 orig_list_labels_left, key=lambda t: t[0], reverse=True
