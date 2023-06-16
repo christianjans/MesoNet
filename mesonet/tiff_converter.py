@@ -58,6 +58,7 @@ def main(args):
 
     for image_to_save in args.images_to_save:
         image_array = tiff_image.get_frame(image_to_save)
+        image_array = np.pad(image_array, (args.padding,), constant_values=0)
         image = PIL.Image.fromarray(image_array)
         image.save(os.path.join(args.save_dir, f"{image_to_save}.png"))
 
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--tiff-image-file", type=str, required=True)
     parser.add_argument("--images-to-save", type=int, nargs="+", required=True)
     parser.add_argument("--save-dir", type=str, required=True)
+    parser.add_argument("--padding", type=int, default=0)
     args = parser.parse_args()
 
     main(args)
