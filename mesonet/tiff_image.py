@@ -66,13 +66,13 @@ def main(args):
 if __name__ == "__main__":
     """
     python mesonet/tiff_converter.py \
-        --tiff-image-file ./../matlab/my_data/04_awake_8x8_30hz_36500fr.tif \
+        --tiff-file ./../matlab/my_data/04_awake_8x8_30hz_36500fr.tif \
         --images-to-save 0 6000 12000 18000 24000 \
         --save-dir ./mesonet_inputs/awake_data/atlas_brain
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tiff-image-file", type=str, required=True)
+    parser.add_argument("--tiff-file", type=str, required=True)
     parser.add_argument("--images-to-save", type=int, nargs="+", required=True)
     parser.add_argument("--save-dir", type=str, required=True)
     parser.add_argument("--padding", type=int, default=0)
