@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from tiff_converter import MultiImageTiff
+from tiff_image import MultiImageTiff
 
 REGION_POINTS_WIDTH_MAX = 512
 REGION_POINTS_HEIGHT_MAX = 512
