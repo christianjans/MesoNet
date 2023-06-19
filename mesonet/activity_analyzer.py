@@ -92,7 +92,7 @@ def activity_complements(args):
                                              args.image_height,
                                              args.n_frames)
 
-    data = np.zeros((len(masks_manager.masks) // 2, 2, args.n_frames))
+    data = np.zeros((len(masks_manager.masks), args.n_frames))
 
     for i, image in enumerate(image_series):
         masked_image = image * masks_manager.masks
@@ -100,21 +100,39 @@ def activity_complements(args):
 
         for label in range(len(masks_manager.masks) // 2):
             complement_label = len(masks_manager.masks) - label - 1
-            data[label][0][i] = masked_sums[label]
-            data[label][1][i] = masked_sums[complement_label]
+            data[label][i] = masked_sums[label]
+            data[complement_label][i] = masked_sums[complement_label]
 
-    for i, values in enumerate(data):
+    for i in range(len(masks_manager.masks) // 2):
         label = i
         complement_label = len(masks_manager.masks) - label - 1
-        correlation = np.corrcoef(values)[0][1]  # The r value of the two activity plots.
+        # Obtain the r value of the two activity plots.
+        correlation = np.corrcoef(data[label], data[complement_label])[0][1]
         plot_filename = f"complement_{label}-{complement_label}_r{correlation:.3f}.png"
 
         plt.title(f"{label} - {complement_label} activity")
-        plt.plot(values[0], label=label)
-        plt.plot(values[1], label=complement_label)
+        plt.plot(data[label], label=label)
+        plt.plot(data[complement_label], label=complement_label)
         plt.legend()
         plt.savefig(os.path.join(args.save_dir, plot_filename))
         plt.clf()
+
+    all_correlation = np.corrcoef(data) * np.tri(len(masks_manager.masks)) * (1 - np.eye(len(masks_manager.masks)))
+    r1s, r2s = np.where(np.logical_and(all_correlation > 0.95, all_correlation < 1.0))
+    for r1, r2 in zip(r1s, r2s):
+        plot_filename = f"complement_{r1}-{r2}_r{all_correlation[r1][r2]:.3f}.png"
+        plt.title(f"{r1} - {r2} activity")
+        plt.plot(data[r1], label=r1)
+        plt.plot(data[r2], label=r2)
+        plt.legend()
+        plt.savefig(os.path.join(args.save_dir, plot_filename))
+        plt.clf()
+
+    print(all_correlation)
+    plt.matshow(all_correlation)
+    plt.colorbar()
+    plt.savefig(os.path.join(args.save_dir, "correlation.png"))
+    plt.clf()
 
 
 def activity(args):
