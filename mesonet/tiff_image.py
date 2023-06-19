@@ -54,7 +54,7 @@ class MultiImageTiff:
 
 
 def main(args):
-    tiff_image = MultiImageTiff(args.tiff_image_file)
+    tiff_image = MultiImageTiff(args.tiff_file)
 
     for image_to_save in args.images_to_save:
         image_array = tiff_image.get_frame(image_to_save)
