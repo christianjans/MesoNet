@@ -92,7 +92,7 @@ def activity_complements(args):
                                              args.image_height,
                                              args.n_frames)
 
-    data = [[[], []] for _ in range(len(masks_manager.masks) // 2)]
+    data = np.zeros((len(masks_manager.masks) // 2, 2, args.n_frames))
 
     for i, image in enumerate(image_series):
         masked_image = image * masks_manager.masks
@@ -100,13 +100,14 @@ def activity_complements(args):
 
         for label in range(len(masks_manager.masks) // 2):
             complement_label = len(masks_manager.masks) - label - 1
-            data[label][0].append(masked_sums[label])
-            data[label][1].append(masked_sums[complement_label])
+            data[label][0][i] = masked_sums[label]
+            data[label][1][i] = masked_sums[complement_label]
 
     for i, values in enumerate(data):
         label = i
         complement_label = len(masks_manager.masks) - label - 1
-        plot_filename = f"complement_{label}-{complement_label}.png"
+        correlation = np.corrcoef(values)[0][1]  # The r value of the two activity plots.
+        plot_filename = f"complement_{label}-{complement_label}_r{correlation:.3f}.png"
 
         plt.title(f"{label} - {complement_label} activity")
         plt.plot(values[0], label=label)
