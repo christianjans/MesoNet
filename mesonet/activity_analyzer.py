@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from tiff_image import MultiImageTiff
+from helpers.image_series import ImageSeriesCreator
 
 REGION_POINTS_WIDTH_MAX = 512
 REGION_POINTS_HEIGHT_MAX = 512
@@ -47,7 +47,7 @@ class MasksManager:
         return int(x * self.scale_factor_x), int(y * self.scale_factor_y)
 
     def _determine_n_regions(self) -> int:
-        return len({region for region in self.region_points.values()})
+        return max(self.region_points.values()) + 1
 
 
 def fft(args):
@@ -57,14 +57,14 @@ def fft(args):
     masks_manager = MasksManager(args.region_points_file,
                                  args.image_width,
                                  args.image_height)
-    tiff_images = MultiImageTiff(args.tiff_image_file)
+    image_series = ImageSeriesCreator.create(args.image_file,
+                                             args.image_width,
+                                             args.image_height,
+                                             args.n_frames)
 
     fft_values = [[] for _ in range(masks_manager.n_regions)]
 
-    for i, image in enumerate(tiff_images):
-        if i == args.n_frames:
-            break
-
+    for i, image in enumerate(image_series):
         masked_image = image * masks_manager.masks
         masked_image_average = masked_image.mean(axis=(1, 2))
 
@@ -87,14 +87,14 @@ def activity_complements(args):
     masks_manager = MasksManager(args.region_points_file,
                                  args.image_width,
                                  args.image_height)
-    tiff_images = MultiImageTiff(args.tiff_image_file)
+    image_series = ImageSeriesCreator.create(args.image_file,
+                                             args.image_width,
+                                             args.image_height,
+                                             args.n_frames)
 
     data = [[[], []] for _ in range(len(masks_manager.masks) // 2)]
 
-    for i, image in enumerate(tiff_images):
-        if i == args.n_frames:
-            break
-
+    for i, image in enumerate(image_series):
         masked_image = image * masks_manager.masks
         masked_sums = masked_image.sum(axis=(1, 2)) / masks_manager.masks.sum(axis=(1, 2))
 
@@ -123,24 +123,24 @@ def activity(args):
     masks_manager = MasksManager(args.region_points_file,
                                  args.image_width,
                                  args.image_height)
-    tiff_images = MultiImageTiff(args.tiff_image_file)
+    image_series = ImageSeriesCreator.create(args.image_file,
+                                             args.image_width,
+                                             args.image_height,
+                                             args.n_frames)
 
     plt.imshow(masks_manager.masks[0])
     plt.show()
 
     data = [[] for _ in range(len(masks_manager.masks))]
 
-    for i, image in enumerate(tiff_images):
-        if i == args.n_frames:
-            break
-
+    for _, image in enumerate(image_series):
         masked_image = image * masks_manager.masks
         masked_sums = masked_image.sum(axis=(1, 2)) / masks_manager.masks.sum(axis=(1, 2))
 
         for j in range(len(masks_manager.masks)):
             data[j].append(masked_sums[j])
 
-    for i, values in enumerate(data):
+    for _, values in enumerate(data):
         plt.plot(values)
     plt.savefig(os.path.join(args.save_dir, f"activity.png"))
     plt.clf()
@@ -149,7 +149,7 @@ def activity(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--region-points-file", type=str, required=True)
-    parser.add_argument("--tiff-image-file", type=str, required=True)
+    parser.add_argument("--image-file", type=str, required=True)
     parser.add_argument("--image-width", type=int, default=128)
     parser.add_argument("--image-height", type=int, default=128)
     parser.add_argument("--save-dir", type=str, required=True)
