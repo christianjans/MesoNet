@@ -1,7 +1,7 @@
 import argparse
 import os
 import pickle
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -121,7 +121,7 @@ MATLAB = {
 
 class MasksManager:
     def __init__(self,
-                 region_points_file: str,
+                 region_points: Union[str, Dict[Tuple[int, int], int]],
                  image_width: int,
                  image_height: int):
         self.image_width = image_width
@@ -134,10 +134,13 @@ class MasksManager:
         self.scale_factor_x = self.image_width / REGION_POINTS_WIDTH_MAX
         self.scale_factor_y = self.image_height / REGION_POINTS_HEIGHT_MAX
 
-        with open(region_points_file, 'rb') as f:
-            self.region_points: Dict[Tuple[int, int], int] = pickle.load(f)
-        # self.region_points: Dict[Tuple[int, int], int] = REGION_POINTS_AWAKE1
-        # self.region_points: Dict[Tuple[int, int], int] = REGION_POINTS_AWAKE2
+        if isinstance(region_points, str):
+            with open(region_points, 'rb') as f:
+                self.region_points: Dict[Tuple[int, int], int] = pickle.load(f)
+        elif isinstance(region_points, dict):
+            self.region_points = region_points
+        else:
+            raise ValueError(f"Invalid region_points parameter.")
 
         self.n_regions = self._determine_n_regions()
         self.masks = np.zeros((self.n_regions,
