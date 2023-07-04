@@ -10,10 +10,12 @@ import re
 import os
 from os.path import join
 from sys import platform
+from typing import Tuple
+import scipy
 import scipy.io as sio
-import cv2
+# import cv2
 import numpy as np
-import neurite as ne
+# import neurite as ne
 import matplotlib.pyplot as plt
 import pathlib
 
@@ -346,3 +348,49 @@ def plot_flow(flow_dir, output_dir):
             plt.savefig(os.path.join(output_dir, '{}_flow_img.png'.format(flow_idx)))
     else:
         print("No .npy flow files found in current directory!")
+
+
+# A translation to Python of the MATLAB code function, reorderMAT, available in
+# https://sites.google.com/site/bctnet/home?authuser=0.
+def reorder_matrix(
+    matrix: np.array,
+    h: int = 10000,
+    cost: str = "line"
+) -> Tuple[np.array, np.array]:
+    assert len(matrix.shape) == 2
+    assert matrix.shape[0] == matrix.shape[1]
+
+    n = matrix.shape[0]
+    diag = np.diag(np.diag(matrix))
+    matrix = matrix - diag
+
+    if cost == "line":
+        profile = scipy.stats.norm.pdf(range(n), 0, n / 2)[::-1]
+    elif cost == "circ":
+        profile = scipy.stats.norm.pdf(range(n), n / 2, n / 4)[::-1]
+    else:
+        raise ValueError(f"Unrecognized cost: {cost}")
+
+    cost = scipy.linalg.toeplitz(profile, profile)
+
+    low_matrix_cost = np.sum(cost * matrix)
+
+    starting_matrix = matrix
+    start_a = np.array([i for i in range(n)])
+
+    for _ in range(h):
+        a = np.array([i for i in range(n)])
+        r = np.random.permutation(n)
+        a[r[0]] = r[1]
+        a[r[1]] = r[0]
+        new_matrix_cost = np.sum(matrix[a, :][:, a] * cost)
+        if (new_matrix_cost < low_matrix_cost):
+            matrix = matrix[a, :][:, a]
+            r0, r1 = start_a[r[0]], start_a[r[1]]
+            start_a[r[0]], start_a[r[1]] = r1, r0
+            low_matrix_cost = new_matrix_cost
+
+    matrix_reordered = \
+        starting_matrix[start_a, :][:, start_a] + diag[start_a, :][:, start_a]
+
+    return matrix_reordered, start_a
