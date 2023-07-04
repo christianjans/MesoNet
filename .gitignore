@@ -37,7 +37,7 @@ mesonet_training*/
 
 mesonet/dlc/**
 
-.venv/
+.venv*/
 
 .python-version
 
