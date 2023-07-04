@@ -44,3 +44,5 @@ mesonet/dlc/**
 models/
 
 *.pkl
+
+.vscode/
