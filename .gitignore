@@ -46,3 +46,5 @@ models/
 *.pkl
 
 .vscode/
+
+*.mp4
