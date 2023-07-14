@@ -2,12 +2,17 @@ import argparse
 import pickle
 from typing import Dict, Tuple
 
+import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 from tabulate import tabulate
 
 BREGMA_POINT_X_INDEX = 13
 BREGMA_POINT_Y_INDEX = 14
 BREGMA_ROW_INDEX = 3
+
+# Add more matplotlib color maps if needed.
+COLOR_MAPS = ["viridis", "plasma", "inferno"]
 
 
 def calculate_center_of_mass(
@@ -34,6 +39,7 @@ def calculate_center_of_mass(
 def main(args):
     landmark_files = args.landmark_files
     region_points_files = args.region_points_files
+    image_files = args.image_files
 
     assert len(landmark_files) == len(region_points_files)
 
@@ -80,18 +86,46 @@ def main(args):
     table = tabulate(aggregated_data, headers, tablefmt="fancy_grid")
     print(table)
 
+    if image_files:
+        assert len(image_files) == len(landmark_files)
+        assert len(image_files) <= len(COLOR_MAPS)
+
+        n_segmented_images = len(image_files)
+
+        for i, image_file in enumerate(image_files):
+            landmarks = np.genfromtxt(landmark_files[i], delimiter=",")
+            bregma_point = np.array([
+                landmarks[BREGMA_ROW_INDEX][BREGMA_POINT_X_INDEX],
+                landmarks[BREGMA_ROW_INDEX][BREGMA_POINT_Y_INDEX],
+            ])
+
+            image = cv2.imread(image_file, cv2.IMREAD_COLOR)
+
+            height, width, _ = image.shape
+            extent = (-bregma_point[0], width - bregma_point[0],
+                      height - bregma_point[1], -bregma_point[1])
+
+            plt.imshow(image,
+                       alpha=(1 / n_segmented_images),
+                       extent=extent,
+                       cmap=COLOR_MAPS[i])
+        plt.show()
+
 
 if __name__ == "__main__":
     """
     python mesonet/bregma_distance.py \
-    --landmark-file /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake1_atlas_brain/dlc_output/tmp_videoDLC_resnet50_atlasAug3shuffle1_1030000.csv \
+    --landmark-files /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake1_atlas_brain/dlc_output/tmp_videoDLC_resnet50_atlasAug3shuffle1_1030000.csv \
                     /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake2_atlas_brain/dlc_output/tmp_videoDLC_resnet50_atlasAug3shuffle1_1030000.csv \
-    --region-points-file /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake1_atlas_brain/dlc_output/region_points.pkl \
-                         /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake2_atlas_brain/dlc_output/region_points.pkl
+    --region-points-files /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake1_atlas_brain/dlc_output/region_points.pkl \
+                         /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake2_atlas_brain/dlc_output/region_points.pkl \
+    --image-file /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake1_atlas_brain/output_overlay/0_mask_segmented.png \
+                 /Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/awake2_atlas_brain/output_overlay/0_mask_segmented.png
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--landmark-files", nargs="+", type=str, required=True)
     parser.add_argument("--region-points-files", nargs="+", type=str, required=True)
+    parser.add_argument("--image-files", nargs="+", type=str)
     args = parser.parse_args()
 
     main(args)
