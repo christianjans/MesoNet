@@ -3,9 +3,11 @@ from typing import List
 
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 
 from helpers.image_series import ImageSeriesCreator
+from helpers.video_series import VideoSeries
 
 PUPIL_EVENT_FRAMES = [
     313,
@@ -29,8 +31,8 @@ SAVE_DIR = "/Users/christian/Documents/summer2023/MesoNet/data_events/test/"
 P_FPS = cv2.VideoCapture(PUIPIL_FILENAME).get(cv2.CAP_PROP_FPS)
 M_FPS = float(os.path.basename(MESOSCALE_PREPROCESSED_FILENAME).split("_")[5][2:-2])
 
-M_F_BEFORE = -15
-M_F_AFTER = 15
+M_F_BEFORE = -20
+M_F_AFTER = 20
 M_F_TOTAL = M_F_AFTER - M_F_BEFORE
 
 
@@ -57,19 +59,30 @@ def main():
                                              128,
                                              128,
                                              "all")
+    video_series = VideoSeries(PUIPIL_FILENAME)
     pdata: np.ndarray = np.genfromtxt(PUPILLOMETRY_CSV_FILE, delimiter=";")
     pdata_interval = int(pdata[1][0] - pdata[0][0])
     pdata = {int(frame): pupil_size for frame, pupil_size in pdata}
 
     pupil_sizes: List[List[float]] = []
+    video_frames: List[List[np.ndarray]] = []
     images: List[List[np.ndarray]] = []
-    # images = [[] for _ in range(M_F_TOTAL)]
     for i, pupil_event_frame in enumerate(PUPIL_EVENT_FRAMES):
         # Collect pupil size data.
         pupil_sizes.append([])
         for j in range(M_F_BEFORE * pdata_interval, M_F_AFTER * pdata_interval):
             if pupil_event_frame - 1 + j in pdata:
                 pupil_sizes[i].append(pdata[pupil_event_frame - 1 + j])
+
+
+        # Collect video data.
+        video_frames.append([])
+        for j in range(M_F_BEFORE, M_F_AFTER):
+            video_frame = video_series.get_frame(pupil_event_frame - 1 + j)
+            video_frame = np.mean(video_frame, axis=-1)
+            video_frame = video_frame.astype(np.uint8)
+            video_frame = 255 - video_frame
+            video_frames[i].append(video_frame)
 
         # Collect mesoscale brain data.
         images.append([])
@@ -79,7 +92,9 @@ def main():
             # images[j].append(image_series.get_frame(mframe - 1 + j))
 
     # Take the average over the collected data.
+    print(np.array(video_frames).shape)
     average_pupil_sizes = np.mean(np.array(pupil_sizes), axis=0)
+    average_video_frames = np.mean(np.array(video_frames), axis=0)
     average_images = np.mean(np.array(images), axis=0)
 
     # Plot the data.
@@ -90,16 +105,32 @@ def main():
 
     pfigure = plt.figure(1)
     paxes = pfigure.gca()
-    paxes.set_ylabel("pupil radius (pixels)")
+    paxes.set_ylabel("average pupil radius (pixels)")
     paxes.set_xlabel("time (s)")
     paxes.set_xticks(range(M_F_TOTAL), pticks)
     paxes.plot(average_pupil_sizes)
 
-    _, maxes = plt.subplots(1, M_F_TOTAL)
+    ROWS = 4
+    assert M_F_TOTAL % ROWS == 0
+
+    mfigure, maxes = plt.subplots(ROWS, M_F_TOTAL // ROWS, dpi=200)
     for i, average_image in enumerate(average_images):
-        maxes[i].set_title(f"{mticks[i]} s")
-        maxes[i].axis('off')
-        maxes[i].imshow(average_image)
+        row, column = i // (M_F_TOTAL // ROWS), i % (M_F_TOTAL // ROWS)
+        maxes[row, column].set_title(f"{mticks[i]}s")
+        maxes[row, column].axis('off')
+        maxes[row, column].imshow(average_image, vmin=-1.0, vmax=1.0)
+    norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+    cmap = mpl.cm.viridis
+    mfigure.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
+    mfigure.tight_layout()
+
+    vfigure, vaxes = plt.subplots(ROWS, M_F_TOTAL // ROWS, dpi=200, figsize=(8, 8))
+    for i, average_video_frame in enumerate(average_video_frames):
+        row, column = i // (M_F_TOTAL // ROWS), i % (M_F_TOTAL // ROWS)
+        vaxes[row, column].set_title(f"{mticks[i]}s")
+        vaxes[row, column].axis('off')
+        vaxes[row, column].imshow(average_video_frame, vmin=0, vmax=255, cmap="binary")
+    vfigure.tight_layout()
 
     plt.show()
 
