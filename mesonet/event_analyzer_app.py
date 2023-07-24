@@ -1,19 +1,24 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
-import cv2
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from activity_analyzer import MasksManager
 from helpers.image_series import ImageSeriesCreator
+from helpers.video_series import VideoSeries
 
 PUPIL_EVENT_FRAME = 313
 MESOSCALE_EVENT_FRAME = 88
-PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
-MESOSCALE_START_FRAME_INDEX = 0
-
-MESOSCALE_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/flash1/02_awake_8x8_30hz_36500fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-36480_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-36480.raw"
 PUIPIL_FILENAME = "/Users/christian/Downloads/fc2_save_2023-02-09-135224-0000.avi"
+MESOSCALE_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/flash1/02_awake_8x8_30hz_36500fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-36480_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-36480.raw"
+PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
+
+PUPIL_EVENT_FRAME = 0
+MESOSCALE_EVENT_FRAME = 0
+PUPIL_FILENAME = ""
+MESOSCALE_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat"
+PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
 
 
 class Controller:
@@ -28,7 +33,9 @@ class View(ttk.Frame):
         super().__init__(parent)
 
         self.mesoscale_image_series = ImageSeriesCreator.create(
-                mesoscale_filename, 128, 128, "all")
+                mesoscale_filename, 256, 256, "all", property="imMean",
+                transpose_axes=(2, 0, 1))
+        self.pupil_video_series = VideoSeries(pupil_filename)
         self.min_slider_value = 1 + PUPIL_START_FRAME_INDEX
         self.max_slider_value = self.mesoscale_image_series.image_array.shape[0]
         self.slider_value = self.min_slider_value
@@ -48,19 +55,11 @@ class View(ttk.Frame):
         parent.bind("<Left>", lambda _: self.slider.set(self.slider.get() - 1))
         parent.bind("<Right>", lambda _: self.slider.set(self.slider.get() + 1))
 
-        self.pupil_video = cv2.VideoCapture(pupil_filename)
-        self.pupil_video_fps = self.pupil_video.get(cv2.CAP_PROP_FPS)
-        self.pupil_video.set(cv2.CAP_PROP_POS_FRAMES, self.slider_value - 1)
-        result, frame = self.pupil_video.read()
-
         self.figure = Figure(figsize=(200, 100), dpi=5)
-        self.plot1 = self.figure.add_subplot(1, 3, 1)
+        self.plot1 = self.figure.add_subplot(1, 2, 1)
         self.plot1.imshow(self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
-        self.plot3 = self.figure.add_subplot(1, 3, 2)
-        self.plot3.imshow(self.mesoscale_image_series.get_frame(MESOSCALE_EVENT_FRAME - 1))
-        self.plot2 = self.figure.add_subplot(1, 3, 3)
-        if result:
-            self.plot2.imshow(frame)
+        self.plot2 = self.figure.add_subplot(1, 2, 2)
+        self.plot2.imshow(self.pupil_video_series.get_frame(self.slider_value - 1))
         self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
         self.canvas.get_tk_widget().grid(row=2, column=0)
 
@@ -71,7 +70,7 @@ class View(ttk.Frame):
 
         label_text = (
             f"Frame {self.slider_value}/{self.max_slider_value} "
-            f"({self.slider_value / self.pupil_video_fps:.3f} s)"
+            f"({self.slider_value / self.pupil_video_series.fps:.3f} s)"
         )
         self.slider_label.config(text=label_text)
 
@@ -79,11 +78,9 @@ class View(ttk.Frame):
         self.plot1.imshow(
                 self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
 
-        self.pupil_video.set(cv2.CAP_PROP_POS_FRAMES, self.slider_value - 1)
-        result, frame = self.pupil_video.read()
-        if result:
-            self.plot2.clear()
-            self.plot2.imshow(frame)
+        self.plot2.clear()
+        self.plot2.imshow(
+                self.pupil_video_series.get_frame(self.slider_value - 1))
 
         self.canvas.draw()
 
