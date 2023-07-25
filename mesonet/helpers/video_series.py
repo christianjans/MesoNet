@@ -41,6 +41,15 @@ class VideoSeries:
     def __init__(self, filename: str):
         self._video_capture = cv2.VideoCapture(filename)
         self._n_frames = self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
+        self._fps = self._video_capture.get(cv2.CAP_PROP_FPS)
+
+    @property
+    def n_frames(self) -> int:
+        return self._n_frames
+    
+    @property
+    def fps(self) -> float:
+        return self._fps
 
     def get_frame(self, frame_index: int) -> np.ndarray:
         if frame_index < 0 or frame_index >= self._n_frames:
