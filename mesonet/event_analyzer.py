@@ -35,6 +35,8 @@ M_F_BEFORE = -20
 M_F_AFTER = 20
 M_F_TOTAL = M_F_AFTER - M_F_BEFORE
 
+ROWS = 4
+
 
 def time_from_pframe(pframe: int) -> float:
     return pframe * P_FPS
@@ -74,7 +76,6 @@ def main():
             if pupil_event_frame - 1 + j in pdata:
                 pupil_sizes[i].append(pdata[pupil_event_frame - 1 + j])
 
-
         # Collect video data.
         video_frames.append([])
         for j in range(M_F_BEFORE, M_F_AFTER):
@@ -89,11 +90,11 @@ def main():
         mframe = pframe_to_mframe(pupil_event_frame)
         for j in range(M_F_BEFORE, M_F_AFTER):
             images[i].append(image_series.get_frame(mframe - 1 + j))
-            # images[j].append(image_series.get_frame(mframe - 1 + j))
 
     # Take the average over the collected data.
     print(np.array(video_frames).shape)
     average_pupil_sizes = np.mean(np.array(pupil_sizes), axis=0)
+    std_pupil_sizes = np.std(np.array(pupil_sizes), axis=0)
     average_video_frames = np.mean(np.array(video_frames), axis=0)
     average_images = np.mean(np.array(images), axis=0)
 
@@ -109,8 +110,11 @@ def main():
     paxes.set_xlabel("time (s)")
     paxes.set_xticks(range(M_F_TOTAL), pticks)
     paxes.plot(average_pupil_sizes)
+    paxes.fill_between(range(M_F_TOTAL),
+                       average_pupil_sizes - std_pupil_sizes,
+                       average_pupil_sizes + std_pupil_sizes,
+                       alpha=0.5)
 
-    ROWS = 4
     assert M_F_TOTAL % ROWS == 0
 
     mfigure, maxes = plt.subplots(ROWS, M_F_TOTAL // ROWS, dpi=200)
