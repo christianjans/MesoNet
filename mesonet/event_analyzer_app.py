@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 
 from activity_analyzer import MasksManager
 from helpers.image_series import ImageSeriesCreator
@@ -20,6 +21,41 @@ PUPIL_FILENAME = ""
 MESOSCALE_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat"
 PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
 
+TITLES = [
+    "Eye-R",
+    "FL-R",
+    "HL-R",
+    "Whisker-L",
+]
+FILES = [
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+]
+OFFSETS = [
+    0,
+    0,
+    0,
+    0,
+]
+KWARGS = [
+    {"property": "imMean", "transpose_axes": (2, 0, 1)},
+    {"property": "imMean", "transpose_axes": (2, 0, 1)},
+    {"property": "imMean", "transpose_axes": (2, 0, 1)},
+    {"property": "imMean", "transpose_axes": (2, 0, 1)},
+]
+REGION_POINTS_FILES = [
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_eye-r_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_fl-r_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_hl-r_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_whisker-l_atlas_brain/dlc_output/region_points.pkl",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/Eye_R.mat",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/HL_R.mat",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/HL_R.mat",
+    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/HL_R.mat",
+]
+
 
 class Controller:
     pass
@@ -32,12 +68,24 @@ class View(ttk.Frame):
                  pupil_filename: str):
         super().__init__(parent)
 
-        self.mesoscale_image_series = ImageSeriesCreator.create(
-                mesoscale_filename, 256, 256, "all", property="imMean",
-                transpose_axes=(2, 0, 1))
-        self.pupil_video_series = VideoSeries(pupil_filename)
-        self.min_slider_value = 1 + PUPIL_START_FRAME_INDEX
-        self.max_slider_value = self.mesoscale_image_series.image_array.shape[0]
+        assert (
+            len(FILES) == len(OFFSETS) == len(KWARGS) == len(REGION_POINTS_FILES)
+        )
+
+        self.n_plots = len(FILES)
+
+        self.series = []
+        self.masks = []
+        for file, kwargs, region_points_file in zip(FILES, KWARGS, REGION_POINTS_FILES):
+            self.series.append(
+                    ImageSeriesCreator.create(file, 256, 256, "all", **kwargs))
+            masks_manager = MasksManager(region_points_file, 256, 256)
+            mask = np.logical_or.reduce(masks_manager.masks)
+            mask = np.ma.masked_where(mask == 0, mask)
+            self.masks.append(mask)
+
+        self.min_slider_value = 1
+        self.max_slider_value = 201
         self.slider_value = self.min_slider_value
 
         self.slider_label = ttk.Label(self, text="")
@@ -55,32 +103,74 @@ class View(ttk.Frame):
         parent.bind("<Left>", lambda _: self.slider.set(self.slider.get() - 1))
         parent.bind("<Right>", lambda _: self.slider.set(self.slider.get() + 1))
 
+        self.plots = []
         self.figure = Figure(figsize=(200, 100), dpi=5)
-        self.plot1 = self.figure.add_subplot(1, 2, 1)
-        self.plot1.imshow(self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
-        self.plot2 = self.figure.add_subplot(1, 2, 2)
-        self.plot2.imshow(self.pupil_video_series.get_frame(self.slider_value - 1))
+        for i in range(self.n_plots):
+            self.plots.append(self.figure.add_subplot(1, self.n_plots, i + 1))
         self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
         self.canvas.get_tk_widget().grid(row=2, column=0)
 
         self.slider_changed(str(self.slider_value))
 
+        # self.mesoscale_image_series = ImageSeriesCreator.create(
+        #         mesoscale_filename, 256, 256, "all", property="imMean",
+        #         transpose_axes=(2, 0, 1))
+        # self.pupil_video_series = VideoSeries(pupil_filename)
+        # self.min_slider_value = 1 + PUPIL_START_FRAME_INDEX
+        # self.max_slider_value = self.mesoscale_image_series.image_array.shape[0]
+        # self.slider_value = self.min_slider_value
+
+        # self.slider_label = ttk.Label(self, text="")
+        # self.slider_label.grid(row=0, column=0)
+
+        # self.slider = ttk.Scale(self,
+        #                         from_=self.min_slider_value,
+        #                         to=self.max_slider_value,
+        #                         command=self.slider_changed,
+        #                         value=self.slider_value,
+        #                         length=600)
+        # self.slider.grid(row=1, column=0, sticky=tk.EW)
+        # self.grid_rowconfigure(1, weight=1)
+
+        # parent.bind("<Left>", lambda _: self.slider.set(self.slider.get() - 1))
+        # parent.bind("<Right>", lambda _: self.slider.set(self.slider.get() + 1))
+
+        # self.figure = Figure(figsize=(200, 100), dpi=5)
+        # self.plot1 = self.figure.add_subplot(1, 2, 1)
+        # self.plot1.imshow(self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
+        # self.plot2 = self.figure.add_subplot(1, 2, 2)
+        # self.plot2.imshow(self.pupil_video_series.get_frame(self.slider_value - 1))
+        # self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
+        # self.canvas.get_tk_widget().grid(row=2, column=0)
+
+        # self.slider_changed(str(self.slider_value))
+
     def slider_changed(self, value: str):
         self.slider_value = int(float(value))
 
+        # label_text = (
+        #     f"Frame {self.slider_value}/{self.max_slider_value} "
+        #     f"({self.slider_value / self.pupil_video_series.fps:.3f} s)"
+        # )
         label_text = (
             f"Frame {self.slider_value}/{self.max_slider_value} "
-            f"({self.slider_value / self.pupil_video_series.fps:.3f} s)"
+            f"({self.slider_value / 30.0:.3f} s)"
         )
         self.slider_label.config(text=label_text)
 
-        self.plot1.clear()
-        self.plot1.imshow(
-                self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
+        for i in range(self.n_plots):
+            self.plots[i].clear()
+            self.plots[i].set_title(TITLES[i])
+            self.plots[i].imshow(self.series[i].get_frame(self.slider_value - 1))
+            self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
 
-        self.plot2.clear()
-        self.plot2.imshow(
-                self.pupil_video_series.get_frame(self.slider_value - 1))
+        # self.plot1.clear()
+        # self.plot1.imshow(
+        #         self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
+
+        # self.plot2.clear()
+        # self.plot2.imshow(
+        #         self.pupil_video_series.get_frame(self.slider_value - 1))
 
         self.canvas.draw()
 
