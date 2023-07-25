@@ -1,9 +1,10 @@
 import argparse
 import os
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 import PIL.Image
+import scipy
 
 BIG_ENDIAN_F32 = ">f4"
 
@@ -120,12 +121,39 @@ class TiffImageSeries(ImageSeries):
         return image_array
 
 
+class MatImageSeries(ImageSeries):
+    def __init__(self,
+                 filename: str,
+                 image_width: int,
+                 image_height: int,
+                 property: str,
+                 transpose_axes: List,
+                 n_frames: Union[int, str] = "all"):
+        self._property = property
+        self._transpose_axes = transpose_axes
+        super().__init__(filename, image_width, image_height, n_frames)
+
+    def _load_image_series(self,
+                           filename: str,
+                           image_width: int,
+                           image_height: int,
+                           n_frames: Union[int, str]) -> np.ndarray:
+        image_array = scipy.io.loadmat(filename)[self._property]
+        image_array = np.transpose(image_array, axes=self._transpose_axes)
+
+        if isinstance(n_frames, int):
+            image_array = image_array[:n_frames]
+
+        return image_array
+
+
 class ImageSeriesCreator:
     @staticmethod
     def create(filename: str,
                image_width: int,
                image_height: int,
-               n_frames: Union[int, str]) -> ImageSeries:
+               n_frames: Union[int, str],
+               **kwargs) -> ImageSeries:
         if filename.endswith(".tif") or filename.endswith(".tiff"):
             return TiffImageSeries(filename,
                                    image_width,
@@ -136,6 +164,12 @@ class ImageSeriesCreator:
                                   image_width,
                                   image_height,
                                   n_frames)
+        elif filename.endswith(".mat"):
+            return MatImageSeries(filename=filename,
+                                  image_width=image_width,
+                                  image_height=image_height,
+                                  n_frames=n_frames,
+                                  **kwargs)
         else:
             raise ValueError(f"Unsupported image filename '{filename}'")
 
@@ -144,7 +178,10 @@ def save_images(args):
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    image_series = ImageSeriesCreator.create(args.image_file, 128, 128, "all")
+    image_series = ImageSeriesCreator.create(args.image_file,
+                                             args.image_width,
+                                             args.image_height,
+                                             "all")
 
     for image_to_save in args.images_to_save:
         image_array = image_series.get_frame(image_to_save)
@@ -172,5 +209,7 @@ if __name__ == "__main__":
     parser.add_argument("--images-to-save", type=int, nargs="+", required=True)
     parser.add_argument("--save-dir", type=str, required=True)
     parser.add_argument("--padding", type=int, default=0)
+    parser.add_argument("--image-width", type=int, default=128)
+    parser.add_argument("--image-height", type=int, default=128)
     args = parser.parse_args()
     save_images(args)
