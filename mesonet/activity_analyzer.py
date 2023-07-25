@@ -4,6 +4,7 @@ import pickle
 from typing import Dict, List, Tuple, Union
 
 import cv2
+import h5py
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
@@ -300,12 +301,21 @@ class MasksManager:
         assert REGION_POINTS_HEIGHT_MAX % self.image_height == 0
 
         # Factor to go from region points to image points.
-        self.scale_factor_x = self.image_width / REGION_POINTS_WIDTH_MAX
-        self.scale_factor_y = self.image_height / REGION_POINTS_HEIGHT_MAX
+        self.scale_down_factor_x = self.image_width / REGION_POINTS_WIDTH_MAX
+        self.scale_down_factor_y = self.image_height / REGION_POINTS_HEIGHT_MAX
+        self.scale_up_factor_x = REGION_POINTS_WIDTH_MAX // self.image_width
+        self.scale_up_factor_y = REGION_POINTS_HEIGHT_MAX // self.image_height
 
         if isinstance(region_points, str):
-            with open(region_points, 'rb') as f:
-                self.region_points: Dict[Tuple[int, int], int] = pickle.load(f)
+            if region_points.endswith(".pkl"):
+                with open(region_points, "rb") as f:
+                    self.region_points: Dict[Tuple[int, int], int] = pickle.load(f)
+            elif region_points.endswith(".mat"):
+                # assert "bilatregionalcorr" in region_points.lower()
+                self.region_points = self._region_points_from_mat(region_points)
+            else:
+                raise ValueError(
+                        f"Unrecognized region points file {region_points}")
         elif isinstance(region_points, dict):
             self.region_points = region_points
         else:
@@ -339,7 +349,7 @@ class MasksManager:
 
     def _resize_point(self, point: Tuple[int, int]) -> Tuple[int, int]:
         x, y = point
-        return int(x * self.scale_factor_x), int(y * self.scale_factor_y)
+        return int(x * self.scale_down_factor_x), int(y * self.scale_down_factor_y)
 
     def _determine_n_regions(self) -> int:
         return max(self.region_points.values()) + 1
@@ -352,13 +362,54 @@ class MasksManager:
                 centroid_x = int(np.average(xs))
                 centroid_y = int(np.average(ys))
                 new_masks[i][centroid_y][centroid_x] = 1
-
                 if square:
                     for column in range(centroid_x - 5, centroid_x + 5):
                         for row in range(centroid_y - 5, centroid_y + 5):
                             new_masks[i][row][column] = 1
-
         self.masks = new_masks
+
+    def _region_points_from_mat(self, mat_file: str) -> Dict[Tuple[int, int], int]:
+        region_points: Dict[Tuple[int, int], int] = {}
+
+        try:
+            mat = scipy.io.loadmat(mat_file)
+            roi_points = mat["RHR"]
+            roi_labels = [label[0] for label in mat["ROIlabels"][0]]
+        except NotImplementedError:
+            with h5py.File(mat_file) as f:
+                # Obtain the ROI points.
+                roi_points = f["RHR"][:]
+                roi_points = roi_points.T
+                roi_points = roi_points.astype(np.int32)
+
+                # Obtain the number of ROI points.
+                n_roi_points = int(f["nRHR"][0][0])
+                assert len(roi_points) == n_roi_points
+
+                # Obtain the ROI labels.
+                roi_labels = []
+                for i in range(n_roi_points):
+                    label_reference = f["ROIlabels"][i][0]
+                    label_object = f[label_reference]
+                    roi_labels.append(
+                        "".join([chr(j) for j in np.squeeze(label_object[:])])
+                    )
+
+        assert len(roi_points) == len(roi_labels)
+
+        for label, (x, y) in zip(roi_labels, roi_points):
+            if label not in MATLAB_INVERSE:
+                continue
+
+            region_number = MATLAB_INVERSE[label]
+            x, y = x - 1, y - 1
+            for row in range(y - 5, y + 5 + 1):
+                for column in range(x - 5, x + 5 + 1):
+                    new_y = self.scale_up_factor_x * row
+                    new_x = self.scale_up_factor_x * column
+                    region_points[(new_x, new_y)] = region_number
+
+        return region_points
 
 
 def fft(args):
@@ -404,6 +455,12 @@ def activity_complements(args):
                                              args.image_width,
                                              args.image_height,
                                              args.n_frames)
+    # image_series = ImageSeriesCreator.create(args.image_file,
+    #                                          args.image_width,
+    #                                          args.image_height,
+    #                                          args.n_frames,
+    #                                          property=args.mat_property,
+    #                                          transpose_axes=args.mat_transpose_axes)
 
     # Save masks on images if a still image is provided.
     if args.still_image_file:
@@ -423,7 +480,7 @@ def activity_complements(args):
         # Plot the current masks that we use.
         for i, mask in enumerate(masks_manager.masks):
             transparent_mask = np.ma.masked_where(mask == 0, mask)
-            plt.imshow(transparent_mask, cmap="autumn")
+            plt.imshow(transparent_mask, alpha=0.1, cmap="autumn")
 
             ys, xs = np.where(mask == 1)
             if len(xs) > 0 and len(ys) > 0:
@@ -448,15 +505,14 @@ def activity_complements(args):
                                 denominator,
                                 out=np.zeros((len(masks_manager.masks),)),
                                 where=(denominator != 0))
-        # masked_sums = masked_image.sum(axis=(1, 2)) / masks_manager.masks.sum(axis=(1, 2))
 
-        for label in range(len(masks_manager.masks) // 2):
-            complement_label = len(masks_manager.masks) - label - 1
+        for label in range(len(masks_manager.masks)):
             data[label][i] = masked_sums[label]
-            data[complement_label][i] = masked_sums[complement_label]
 
     all_correlations = np.corrcoef(data)
     all_correlations_masked = all_correlations * np.tri(len(masks_manager.masks)) * (1 - np.eye(len(masks_manager.masks)))
+
+    np.save(os.path.join(args.save_dir, "timecourse.npy"), data)
 
     # Plot the complement regions.
     for i in range(len(masks_manager.masks) // 2):
@@ -473,6 +529,15 @@ def activity_complements(args):
         plt.title(f"{label} - {complement_label} activity")
         plt.plot(data[label], label=label)
         plt.plot(data[complement_label], label=complement_label)
+        plt.legend()
+        plt.savefig(os.path.join(args.save_dir, plot_filename))
+        plt.clf()
+
+    # Plot the highlighted regions.
+    for highlight in args.highlights:
+        plot_filename = f"activity_{highlight}.png"
+        plt.title(f"{highlight} activity")
+        plt.plot(data[highlight], label=highlight)
         plt.legend()
         plt.savefig(os.path.join(args.save_dir, plot_filename))
         plt.clf()
@@ -601,20 +666,20 @@ def seed_pixel_map(args):
 def correlation_matrix_comparison():
     # NOTE: To add more regions, modify the MATLAB dictionary above.
 
-    DATASET = "awake1"  # TODO
-    SAVE_DIR = f"./data/corrmatcomp_{DATASET}"  # TODO
+    DATASET = "awake2"  # TODO
+    SAVE_DIR = f"./data/corrmatcomp_{DATASET}"
 
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
 
-    MATLAB_CORRELATION_FILENAME = f"/Users/christian/Documents/summer2023/matlab/my_data/{DATASET}/SOP_BilatRegionalCorr_35000.mat"  # TODO
-    MATLAB_TAG = f"SOP_BilatRegionalCorr_{DATASET}_35000"  # TODO
-    MESONET_CORRELATION_FILENAME_1 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_com_preprocessed_0.1-1Hz_35000/correlation.npy"  # TODO
-    MESONET_1_TAG = f"MesoNet_{DATASET}_com_35000"  # TODO
-    MESONET_CORRELATION_FILENAME_2 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_regions_preprocessed_0.1-1Hz_35000/correlation.npy"  # TODO
-    MESONET_2_TAG = f"MesoNet_{DATASET}_regions_35000"  # TODO
-    MESONET_CORRELATION_FILENAME_3 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_comsquare_preprocessed_0.1-1Hz_35000/correlation.npy"  # TODO
-    MESONET_3_TAG = f"MesoNet_{DATASET}_comsquare_35000"  # TODO
+    MATLAB_CORRELATION_FILENAME = f"/Users/christian/Documents/summer2023/matlab/my_data/{DATASET}/SOP_BilatRegionalCorr_35000.mat"
+    MATLAB_TAG = f"SOP_BilatRegionalCorr_{DATASET}_35000"
+    MESONET_CORRELATION_FILENAME_1 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_com_0.1-1Hz_35000/correlation.npy"
+    MESONET_1_TAG = f"MesoNet_{DATASET}_com_35000"
+    MESONET_CORRELATION_FILENAME_2 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_regions_0.1-1Hz_35000/correlation.npy"
+    MESONET_2_TAG = f"MesoNet_{DATASET}_regions_35000"
+    MESONET_CORRELATION_FILENAME_3 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_comsquare_0.1-1Hz_35000/correlation.npy"
+    MESONET_3_TAG = f"MesoNet_{DATASET}_comsquare_35000"
 
     matlab_data = scipy.io.loadmat(MATLAB_CORRELATION_FILENAME)
     matlab_labels = [label[0] for label in matlab_data["ROIlabels"][0]]
@@ -654,7 +719,7 @@ def correlation_matrix_comparison():
     plt.rcParams.update({"font.size": 6})
 
     plot_title = f"{MATLAB_TAG}-{MESONET_1_TAG}"
-    plt.matshow(new_matlab_correlation - new_mesonet_correlation_1)
+    plt.matshow(new_matlab_correlation - new_mesonet_correlation_1, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
@@ -664,7 +729,7 @@ def correlation_matrix_comparison():
     plt.clf()
 
     plot_title = f"{MATLAB_TAG}-{MESONET_2_TAG}"
-    plt.matshow(new_matlab_correlation - new_mesonet_correlation_2)
+    plt.matshow(new_matlab_correlation - new_mesonet_correlation_2, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
@@ -674,7 +739,7 @@ def correlation_matrix_comparison():
     plt.clf()
 
     plot_title = f"{MESONET_1_TAG}-{MESONET_2_TAG}"
-    plt.matshow(new_mesonet_correlation_1 - new_mesonet_correlation_2)
+    plt.matshow(new_mesonet_correlation_1 - new_mesonet_correlation_2, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
@@ -684,7 +749,7 @@ def correlation_matrix_comparison():
     plt.clf()
 
     plot_title = f"{MATLAB_TAG}-{MESONET_3_TAG}"
-    plt.matshow(new_matlab_correlation - new_mesonet_correlation_3)
+    plt.matshow(new_matlab_correlation - new_mesonet_correlation_3, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
@@ -694,7 +759,7 @@ def correlation_matrix_comparison():
     plt.clf()
 
     plot_title = f"{MESONET_1_TAG}-{MESONET_3_TAG}"
-    plt.matshow(new_mesonet_correlation_1 - new_mesonet_correlation_3)
+    plt.matshow(new_mesonet_correlation_1 - new_mesonet_correlation_3, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
@@ -704,7 +769,7 @@ def correlation_matrix_comparison():
     plt.clf()
 
     plot_title = f"{MESONET_2_TAG}-{MESONET_3_TAG}"
-    plt.matshow(new_mesonet_correlation_2 - new_mesonet_correlation_3)
+    plt.matshow(new_mesonet_correlation_2 - new_mesonet_correlation_3, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
@@ -712,6 +777,83 @@ def correlation_matrix_comparison():
     plt.colorbar()
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
+
+    # plot_title = f"sanity"
+    # ours = np.load("/Users/christian/Documents/summer2023/MesoNet/data/awake2_regions_0.1-1Hz_matlab-comp_35000/correlation.npy")
+    # ours = ours[:38, :]
+    # ours = ours[:, :38]
+    # plt.matshow(ours - matlab_correlation, vmin=-1.0, vmax=1.0)
+    # plt.title(plot_title)
+    # plt.colorbar()
+    # plt.savefig(os.path.join(SAVE_DIR, f"sanity.png"), dpi=200)
+    # plt.clf()
+
+
+def region_stds():
+    DATASET = "awake1"
+    MESONET_TIMECOURSE_FILES = [
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_com_0.1-1Hz_35000/timecourse.npy",
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_regions_0.1-1Hz_35000/timecourse.npy",
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_comsquare_0.1-1Hz_35000/timecourse.npy",
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_sopbilat_0.1-1Hz_35000/timecourse.npy",
+    ]
+    MESONET_TITLES = [
+        "com",
+        "regions",
+        "comsquare",
+        "sanity",
+    ]
+    MATLAB_TIMECOURSE_FILES = [
+        f"/Users/christian/Documents/summer2023/matlab/my_data/{DATASET}/SOP_BilatRegionalCorr_35000.mat",
+    ]
+    MATLAB_TITLES = [
+        "sop",
+    ]
+
+    assert len(MATLAB_TIMECOURSE_FILES) > 0
+    assert len(MESONET_TIMECOURSE_FILES) == len(MESONET_TITLES)
+    assert len(MATLAB_TIMECOURSE_FILES) == len(MATLAB_TITLES)
+
+    matlab_data = scipy.io.loadmat(MATLAB_TIMECOURSE_FILES[0])
+    matlab_labels = [label[0] for label in matlab_data["ROIlabels"][0]]
+    matlab_region_numbers = []
+    mesonet_region_numbers = []
+    region_names = []
+    for label in matlab_labels:
+        if label in MATLAB_INVERSE:
+            matlab_region_numbers.append(matlab_labels.index(label))
+            mesonet_region_numbers.append(MATLAB_INVERSE[label])
+            region_names.append(label)
+
+    mesonet_timecourses = []
+    for timecourse_file in MESONET_TIMECOURSE_FILES:
+        timecourse = np.load(timecourse_file)
+        timecourse = timecourse[mesonet_region_numbers, :]
+        mesonet_timecourses.append(timecourse)
+
+    matlab_timecourses = []
+    for timecourse_file in MATLAB_TIMECOURSE_FILES:
+        timecourse = scipy.io.loadmat(timecourse_file)
+        timecourse = timecourse["timecourse"]
+        timecourse = timecourse[matlab_region_numbers, :]
+        matlab_timecourses.append(timecourse)
+
+    timecourses = mesonet_timecourses + matlab_timecourses
+    titles = MESONET_TITLES + MATLAB_TITLES
+    stds = np.std(np.array(timecourses), axis=-1)
+
+    def subcategorybar(labels, values, titles, width=0.8):
+        n = len(values)
+        labels_range = np.arange(len(labels))
+        for i in range(n):
+            plt.bar(labels_range - width / 2. + i / float(n) * width, values[i],
+                    width=width / float(n), align="edge")
+        plt.xticks(labels_range, labels)
+        plt.legend(titles)
+
+    subcategorybar(region_names, stds, titles)
+
+    plt.show()
 
 
 def _plot_correlation_matrix(
@@ -783,10 +925,13 @@ if __name__ == "__main__":
     parser.add_argument("--still-image-file", type=str)
     parser.add_argument("--image-width", type=int, default=128)
     parser.add_argument("--image-height", type=int, default=128)
+    parser.add_argument("--mat-property", type=str, default=None)
+    parser.add_argument("--mat-transpose-axes", type=int, nargs="+", default=None)
     parser.add_argument("--save-dir", type=str, required=True)
     parser.add_argument("--n-frames", type=int, default=2000)
     parser.add_argument("--use-com", action='store_true')
     parser.add_argument("--square-com", action='store_true')
+    parser.add_argument("--highlights", type=int, nargs="+", default=[])
     args = parser.parse_args()
 
     # fft(args)
@@ -794,6 +939,7 @@ if __name__ == "__main__":
     # activity(args)
     # seed_pixel_map(args)
     # correlation_matrix_comparison()
+    # region_stds()
 
 
 
