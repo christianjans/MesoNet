@@ -667,33 +667,43 @@ def correlation_matrix_comparison():
     # NOTE: To add more regions, modify the MATLAB dictionary above.
 
     DATASET = "awake2"  # TODO
-    SAVE_DIR = f"./data/corrmatcomp_{DATASET}"
+    SAVE_DIR = f"./data/corrmatcomp_{DATASET}_test"
 
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
 
-    MATLAB_CORRELATION_FILENAME = f"/Users/christian/Documents/summer2023/matlab/my_data/{DATASET}/SOP_BilatRegionalCorr_35000.mat"
-    MATLAB_TAG = f"SOP_BilatRegionalCorr_{DATASET}_35000"
-    MESONET_CORRELATION_FILENAME_1 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_com_0.1-1Hz_35000/correlation.npy"
-    MESONET_1_TAG = f"MesoNet_{DATASET}_com_35000"
-    MESONET_CORRELATION_FILENAME_2 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_regions_0.1-1Hz_35000/correlation.npy"
-    MESONET_2_TAG = f"MesoNet_{DATASET}_regions_35000"
-    MESONET_CORRELATION_FILENAME_3 = f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_comsquare_0.1-1Hz_35000/correlation.npy"
-    MESONET_3_TAG = f"MesoNet_{DATASET}_comsquare_35000"
+    MESONET_FILES = [
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_com_0.1-1Hz_35000/correlation.npy",
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_regions_0.1-1Hz_35000/correlation.npy",
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_comsquare_0.1-1Hz_35000/correlation.npy",
+        f"/Users/christian/Documents/summer2023/MesoNet/data/{DATASET}_sopbilat_0.1-1Hz_35000/correlation.npy"
+    ]
+    MESONET_TAGS = [
+        f"MesoNet_{DATASET}_com_35000",
+        f"MesoNet_{DATASET}_regions_35000",
+        f"MesoNet_{DATASET}_comsquare_35000",
+        f"MesoNet_{DATASET}_sopbilat_35000",
+    ]
+    MATLAB_FILES = [
+        f"/Users/christian/Documents/summer2023/matlab/my_data/{DATASET}/SOP_BilatRegionalCorr_35000.mat",
+    ]
+    MATLAB_TAGS = [
+        f"SOP_BilatRegionalCorr_{DATASET}_35000",
+    ]
 
-    matlab_data = scipy.io.loadmat(MATLAB_CORRELATION_FILENAME)
-    matlab_labels = [label[0] for label in matlab_data["ROIlabels"][0]]
-
-    matlab_correlation = matlab_data["corrmatrix1"]
-    mesonet_correlation_1 = np.load(MESONET_CORRELATION_FILENAME_1)
-    mesonet_correlation_2 = np.load(MESONET_CORRELATION_FILENAME_2)
-    mesonet_correlation_3 = np.load(MESONET_CORRELATION_FILENAME_3)
+    assert len(MESONET_FILES) == len(MESONET_TAGS)
+    assert len(MATLAB_FILES) == len(MATLAB_TAGS)
+    assert len(MATLAB_FILES) > 0
 
     n_regions = len(MATLAB)
+
+    # Determine which regions appear in the MesoNet segmentation as well as the
+    # MATLAB RHR regions.
+    matlab_data = scipy.io.loadmat(MATLAB_FILES[0])
+    matlab_labels = [label[0] for label in matlab_data["ROIlabels"][0]]
     matlab_region_numbers = []
     mesonet_region_numbers = []
     region_names = []
-
     for label in matlab_labels:
         if label in MATLAB_INVERSE:
             matlab_region_numbers.append(matlab_labels.index(label))
@@ -702,121 +712,48 @@ def correlation_matrix_comparison():
 
     # Create the new correlation matrices containing only those regions that are
     # in both the MATLAB and MesoNet figures.
-    new_matlab_correlation = \
-            matlab_correlation[matlab_region_numbers, :][:, matlab_region_numbers]
-    new_mesonet_correlation_1 = \
-            mesonet_correlation_1[mesonet_region_numbers, :][:, mesonet_region_numbers]
-    new_mesonet_correlation_2 = \
-            mesonet_correlation_2[mesonet_region_numbers, :][:, mesonet_region_numbers]
-    new_mesonet_correlation_3 = \
-            mesonet_correlation_3[mesonet_region_numbers, :][:, mesonet_region_numbers]
+    mesonet_correlation_matrices = []
+    for file in MESONET_FILES:
+        matrix = np.load(file)
+        matrix = matrix[mesonet_region_numbers, :][:, mesonet_region_numbers]
+        mesonet_correlation_matrices.append(matrix)
 
+    matlab_correlation_matrices = []
+    for file in MATLAB_FILES:
+        matrix = scipy.io.loadmat(file)
+        matrix = matrix["corrmatrix1"].copy()
+        matrix = matrix[matlab_region_numbers, :][:, matlab_region_numbers]
+        matlab_correlation_matrices.append(matrix)
+
+    correlation_matrices = (
+        mesonet_correlation_matrices + matlab_correlation_matrices
+    )
+    correlation_tags = MESONET_TAGS + MATLAB_TAGS
     plot_labels = [f"{region_number} ({region_name})"
                    for region_number, region_name
                    in zip(mesonet_region_numbers, region_names)]
+    n_datasets = len(correlation_matrices)
 
     # Plot and save.
-    plt.rcParams.update({"font.size": 6})
+    for minuend in range(0, n_datasets - 1):
+        for subtrahend in range(minuend + 1, n_datasets):
+            minuend_matrix = correlation_matrices[minuend]
+            subtrahend_matrix = correlation_matrices[subtrahend]
+            difference_matrix = minuend_matrix - subtrahend_matrix
 
-    plot_title = f"{MATLAB_TAG}-{MESONET_1_TAG}"
-    difference_matrix = new_matlab_correlation - new_mesonet_correlation_1
-    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
-    plt.title(plot_title)
-    plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
-    plt.yticks(range(n_regions), labels=plot_labels)
-    plt.tick_params(axis="x", labelbottom=True)
-    plt.colorbar()
-    plt.rcParams.update({"font.size": 3})
-    for (i, j), difference in np.ndenumerate(difference_matrix):
-        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
-    plt.rcParams.update({"font.size": 6})
-    plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
-    plt.clf()
-
-    plot_title = f"{MATLAB_TAG}-{MESONET_2_TAG}"
-    difference_matrix = new_matlab_correlation - new_mesonet_correlation_2
-    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
-    plt.title(plot_title)
-    plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
-    plt.yticks(range(n_regions), labels=plot_labels)
-    plt.tick_params(axis="x", labelbottom=True)
-    plt.colorbar()
-    plt.rcParams.update({"font.size": 3})
-    for (i, j), difference in np.ndenumerate(difference_matrix):
-        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
-    plt.rcParams.update({"font.size": 6})
-    plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
-    plt.clf()
-
-    plot_title = f"{MESONET_1_TAG}-{MESONET_2_TAG}"
-    difference_matrix = new_mesonet_correlation_1 - new_mesonet_correlation_2
-    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
-    plt.title(plot_title)
-    plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
-    plt.yticks(range(n_regions), labels=plot_labels)
-    plt.tick_params(axis="x", labelbottom=True)
-    plt.colorbar()
-    plt.rcParams.update({"font.size": 3})
-    for (i, j), difference in np.ndenumerate(difference_matrix):
-        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
-    plt.rcParams.update({"font.size": 6})
-    plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
-    plt.clf()
-
-    plot_title = f"{MATLAB_TAG}-{MESONET_3_TAG}"
-    difference_matrix = new_matlab_correlation - new_mesonet_correlation_3
-    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
-    plt.title(plot_title)
-    plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
-    plt.yticks(range(n_regions), labels=plot_labels)
-    plt.tick_params(axis="x", labelbottom=True)
-    plt.colorbar()
-    plt.rcParams.update({"font.size": 3})
-    for (i, j), difference in np.ndenumerate(difference_matrix):
-        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
-    plt.rcParams.update({"font.size": 6})
-    plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
-    plt.clf()
-
-    plot_title = f"{MESONET_1_TAG}-{MESONET_3_TAG}"
-    difference_matrix = new_mesonet_correlation_1 - new_mesonet_correlation_3
-    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
-    plt.title(plot_title)
-    plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
-    plt.yticks(range(n_regions), labels=plot_labels)
-    plt.tick_params(axis="x", labelbottom=True)
-    plt.colorbar()
-    plt.rcParams.update({"font.size": 3})
-    for (i, j), difference in np.ndenumerate(difference_matrix):
-        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
-    plt.rcParams.update({"font.size": 6})
-    plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
-    plt.clf()
-
-    plot_title = f"{MESONET_2_TAG}-{MESONET_3_TAG}"
-    difference_matrix = new_mesonet_correlation_2 - new_mesonet_correlation_3
-    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
-    plt.title(plot_title)
-    plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
-    plt.yticks(range(n_regions), labels=plot_labels)
-    plt.tick_params(axis="x", labelbottom=True)
-    plt.colorbar()
-    plt.rcParams.update({"font.size": 3})
-    for (i, j), difference in np.ndenumerate(difference_matrix):
-        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
-    plt.rcParams.update({"font.size": 6})
-    plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
-    plt.clf()
-
-    # plot_title = f"sanity"
-    # ours = np.load("/Users/christian/Documents/summer2023/MesoNet/data/awake2_regions_0.1-1Hz_matlab-comp_35000/correlation.npy")
-    # ours = ours[:38, :]
-    # ours = ours[:, :38]
-    # plt.matshow(ours - matlab_correlation, vmin=-1.0, vmax=1.0)
-    # plt.title(plot_title)
-    # plt.colorbar()
-    # plt.savefig(os.path.join(SAVE_DIR, f"sanity.png"), dpi=200)
-    # plt.clf()
+            plt.rcParams.update({"font.size": 6})
+            plot_title = f"{correlation_tags[minuend]} - {correlation_tags[subtrahend]}"
+            plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
+            plt.title(plot_title)
+            plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
+            plt.yticks(range(n_regions), labels=plot_labels)
+            plt.tick_params(axis="x", labelbottom=True)
+            plt.colorbar()
+            plt.rcParams.update({"font.size": 3})
+            for (i, j), difference in np.ndenumerate(difference_matrix):
+                plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+            plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
+            plt.clf()
 
 
 def region_stds():
