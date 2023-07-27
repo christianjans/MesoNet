@@ -719,62 +719,92 @@ def correlation_matrix_comparison():
     plt.rcParams.update({"font.size": 6})
 
     plot_title = f"{MATLAB_TAG}-{MESONET_1_TAG}"
-    plt.matshow(new_matlab_correlation - new_mesonet_correlation_1, vmin=-1.0, vmax=1.0)
+    difference_matrix = new_matlab_correlation - new_mesonet_correlation_1
+    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
+    plt.rcParams.update({"font.size": 3})
+    for (i, j), difference in np.ndenumerate(difference_matrix):
+        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+    plt.rcParams.update({"font.size": 6})
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
 
     plot_title = f"{MATLAB_TAG}-{MESONET_2_TAG}"
-    plt.matshow(new_matlab_correlation - new_mesonet_correlation_2, vmin=-1.0, vmax=1.0)
+    difference_matrix = new_matlab_correlation - new_mesonet_correlation_2
+    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
+    plt.rcParams.update({"font.size": 3})
+    for (i, j), difference in np.ndenumerate(difference_matrix):
+        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+    plt.rcParams.update({"font.size": 6})
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
 
     plot_title = f"{MESONET_1_TAG}-{MESONET_2_TAG}"
-    plt.matshow(new_mesonet_correlation_1 - new_mesonet_correlation_2, vmin=-1.0, vmax=1.0)
+    difference_matrix = new_mesonet_correlation_1 - new_mesonet_correlation_2
+    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
+    plt.rcParams.update({"font.size": 3})
+    for (i, j), difference in np.ndenumerate(difference_matrix):
+        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+    plt.rcParams.update({"font.size": 6})
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
 
     plot_title = f"{MATLAB_TAG}-{MESONET_3_TAG}"
-    plt.matshow(new_matlab_correlation - new_mesonet_correlation_3, vmin=-1.0, vmax=1.0)
+    difference_matrix = new_matlab_correlation - new_mesonet_correlation_3
+    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
+    plt.rcParams.update({"font.size": 3})
+    for (i, j), difference in np.ndenumerate(difference_matrix):
+        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+    plt.rcParams.update({"font.size": 6})
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
 
     plot_title = f"{MESONET_1_TAG}-{MESONET_3_TAG}"
-    plt.matshow(new_mesonet_correlation_1 - new_mesonet_correlation_3, vmin=-1.0, vmax=1.0)
+    difference_matrix = new_mesonet_correlation_1 - new_mesonet_correlation_3
+    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
+    plt.rcParams.update({"font.size": 3})
+    for (i, j), difference in np.ndenumerate(difference_matrix):
+        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+    plt.rcParams.update({"font.size": 6})
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
 
     plot_title = f"{MESONET_2_TAG}-{MESONET_3_TAG}"
-    plt.matshow(new_mesonet_correlation_2 - new_mesonet_correlation_3, vmin=-1.0, vmax=1.0)
+    difference_matrix = new_mesonet_correlation_2 - new_mesonet_correlation_3
+    plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
     plt.title(plot_title)
     plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
     plt.yticks(range(n_regions), labels=plot_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
+    plt.rcParams.update({"font.size": 3})
+    for (i, j), difference in np.ndenumerate(difference_matrix):
+        plt.text(j, i, f"{difference:0.3f}", ha="center", va="center")
+    plt.rcParams.update({"font.size": 6})
     plt.savefig(os.path.join(SAVE_DIR, f"{plot_title}.png"), dpi=200)
     plt.clf()
 
