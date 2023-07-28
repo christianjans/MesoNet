@@ -472,7 +472,8 @@ def activity_complements(args):
         # Plot the predicted ROIs from MesoNet.
         region_points = np.zeros((args.image_height, args.image_width))
         for x, y in masks_manager.region_points:
-            new_x, new_y = x // 4, y // 4
+            new_x = int(x * masks_manager.scale_down_factor_x)
+            new_y = int(y * masks_manager.scale_down_factor_y)
             region_points[new_y][new_x] = 1
         transparent_region_points = np.ma.masked_where(region_points == 0, region_points)
         plt.imshow(transparent_region_points, alpha=0.6)
