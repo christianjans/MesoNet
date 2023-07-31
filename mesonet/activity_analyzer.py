@@ -821,6 +821,7 @@ def region_stds():
 
     subcategorybar(region_names, stds, titles)
 
+    plt.title(DATASET)
     plt.show()
 
 
