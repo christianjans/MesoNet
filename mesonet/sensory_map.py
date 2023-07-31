@@ -36,6 +36,35 @@ SCOPE = 1.5
 # SCOPE = 1.5
 
 
+# MESOSCALE_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat"
+# REGION_POINTS_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/Eye_R.mat"
+# SAVE_DIR = "/Users/christian/Documents/summer2023/MesoNet/data/isoflurane1_mouse6_eye-r"
+# EVENT_FRAME = 29  # NOTE: This is the frame number, not the index.
+# FPS = 30.0
+# SCOPE = 1.5
+
+# MESOSCALE_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat"
+# REGION_POINTS_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/HL_R.mat"
+# SAVE_DIR = "/Users/christian/Documents/summer2023/MesoNet/data/isoflurane1_mouse6_fl-r"
+# EVENT_FRAME = 29  # NOTE: This is the frame number, not the index.
+# FPS = 30.0
+# SCOPE = 1.5
+
+# MESOSCALE_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat"
+# REGION_POINTS_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/HL_R.mat"
+# SAVE_DIR = "/Users/christian/Documents/summer2023/MesoNet/data/isoflurane1_mouse6_hl-r"
+# EVENT_FRAME = 29  # NOTE: This is the frame number, not the index.
+# FPS = 30.0
+# SCOPE = 1.5
+
+# MESOSCALE_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat"
+# REGION_POINTS_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/HL_R.mat"
+# SAVE_DIR = "/Users/christian/Documents/summer2023/MesoNet/data/isoflurane1_mouse6_whisker-l"
+# EVENT_FRAME = 29  # NOTE: This is the frame number, not the index.
+# FPS = 30.0
+# SCOPE = 1.5
+
+
 def coms_from_region_points(
     region_points: Dict[Tuple[int, int], int]
 ) -> np.ndarray:
