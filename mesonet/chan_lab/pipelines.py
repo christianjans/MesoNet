@@ -27,7 +27,7 @@ def process_atlas_brain_pipeline(args):
         mode="test",
         atlas_to_brain_align=True,
         use_voxelmorph=False,
-        use_unet=True,
+        use_unet=args.no_unet,
         use_dlc=True,
         sensory_match=False,
         mat_save=False,
@@ -58,6 +58,7 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument("--input-dir", type=str, required=True)
     parser.add_argument("--output-dir", type=str, required=True)
+    parser.add_argument("--no-unet", action="store_false")
     args = parser.parse_args()
 
     main(args)
