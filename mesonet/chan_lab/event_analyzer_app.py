@@ -26,6 +26,7 @@ PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
 ISOFLURANE_ARGS = [
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -34,6 +35,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -42,6 +44,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -50,6 +53,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -58,6 +62,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -66,6 +71,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -74,6 +80,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,
@@ -82,6 +89,7 @@ ISOFLURANE_ARGS = [
     ),
     ImageSeriesCollectionArgs(
         file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+        cache=True,
         fps=30.0,
         image_width=256,
         image_height=256,

@@ -9,6 +9,7 @@ from chan_lab.helpers.image_series import ImageSeries, ImageSeriesCreator
 @dataclasses.dataclass(frozen=True)
 class ImageSeriesCollectionArgs:
     file: str
+    cache: bool
     fps: float
     image_width: int
     image_height: int
@@ -38,9 +39,13 @@ class ImageSeriesCollection:
             assert arg.fps > 0
             self._fpses.append(arg.fps)
 
-            image_series = ImageSeriesCreator.create_cached_image_series(
-                    arg.file, arg.image_width, arg.image_height, "all",
-                    **arg.kwargs)
+            if arg.cache:
+                image_series = ImageSeriesCreator.create_cached_image_series(
+                        arg.file, arg.image_width, arg.image_height, "all",
+                        **arg.kwargs)
+            else:
+                image_series = ImageSeriesCreator.create_uncached_image_series(
+                        arg.file)
             self._image_series.append(image_series)
 
     def get_frames(self, frame_index: int) -> List[np.ndarray]:
