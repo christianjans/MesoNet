@@ -8,7 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
 from activity_analyzer import MasksManager
-from helpers.image_series import ImageSeries, ImageSeriesCreator
+from chan_lab.helpers.image_series import ImageSeries, ImageSeriesCreator
 
 PUPIL_EVENT_FRAME = 313
 MESOSCALE_EVENT_FRAME = 88

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 
-from helpers.image_series import ImageSeriesCreator
+from chan_lab.helpers.image_series import ImageSeriesCreator
 
 PUPIL_EVENT_FRAMES = [
     313,

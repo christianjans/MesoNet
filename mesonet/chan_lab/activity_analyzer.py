@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
-from helpers.image_series import ImageSeriesCreator
+from chan_lab.helpers.image_series import ImageSeriesCreator
 from utils import reorder_matrix
 
 REGION_POINTS_WIDTH_MAX = 512

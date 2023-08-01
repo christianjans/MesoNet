@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from helpers.image_series import ImageSeriesCreator
+from chan_lab.helpers.image_series import ImageSeriesCreator
 from activity_analyzer import MasksManager
 
 MESOSCALE_FILE = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat"
