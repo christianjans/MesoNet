@@ -1,13 +1,14 @@
+import dataclasses
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Any, Dict, List
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
 from activity_analyzer import MasksManager
-from helpers.image_series import ImageSeriesCreator
-from helpers.video_series import VideoSeries
+from helpers.image_series import ImageSeries, ImageSeriesCreator
 
 PUPIL_EVENT_FRAME = 313
 MESOSCALE_EVENT_FRAME = 88
@@ -21,40 +22,158 @@ PUPIL_FILENAME = ""
 MESOSCALE_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat"
 PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
 
-TITLES = [
-    "Eye-R",
-    "FL-R",
-    "HL-R",
-    "Whisker-L",
+
+@dataclasses.dataclass(frozen=True)
+class ImageSeriesCollectionArgs:
+    file: str
+    fps: float
+    image_width: int
+    image_height: int
+    frame_index_offset: int
+    kwargs: Dict[str, Any]
+
+
+class ImageSeriesCollection:
+    REFERENCE_INDEX = 0
+
+    def __init__(self,
+                 reference: ImageSeriesCollectionArgs,
+                 *args: ImageSeriesCollectionArgs):
+        assert reference.frame_index_offset == 0
+
+        self._image_series: List[ImageSeries] = []
+        self._offsets: List[int] = []
+        self._fpses: List[float] = []
+
+        args = list(args)
+        args.insert(ImageSeriesCollection.REFERENCE_INDEX, reference)
+
+        for arg in args:
+            assert arg.frame_index_offset >= 0
+            self._offsets.append(arg.frame_index_offset)
+
+            assert arg.fps > 0
+            self._fpses.append(arg.fps)
+
+            image_series = ImageSeriesCreator.create_cached_image_series(
+                    arg.file, arg.image_width, arg.image_height, "all",
+                    **arg.kwargs)
+            self._image_series.append(image_series)
+
+    def get_frames(self, frame_index: int) -> List[np.ndarray]:
+        assert frame_index >= max(self._offsets)
+
+        images = []
+        for i, image_series in enumerate(self._image_series):
+            relative_frame_index = self._relative_frame_index(
+                    frame_index, self._offsets[i], self._fpses[i])
+            images.append(image_series.get_frame(relative_frame_index))
+
+        return images
+
+    def _relative_frame_index(self,
+                              frame_index: int,
+                              offset: int,
+                              fps: float) -> int:
+        reference_fps = self._fpses[ImageSeriesCollection.REFERENCE_INDEX]
+
+        frame_time = frame_index / reference_fps
+        start_time = offset / reference_fps
+        diff_time = frame_time - start_time
+
+        relative_frame_index = diff_time * fps
+        relative_frame_index = int(round(relative_frame_index))
+
+        return relative_frame_index
+
+
+ISOFLURANE_ARGS = [
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
+    ImageSeriesCollectionArgs(
+        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+        fps=30.0,
+        image_width=256,
+        image_height=256,
+        frame_index_offset=0,
+        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    ),
 ]
-FILES = [
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
-]
-OFFSETS = [
-    0,
-    0,
-    0,
-    0,
-]
-KWARGS = [
-    {"property": "imMean", "transpose_axes": (2, 0, 1)},
-    {"property": "imMean", "transpose_axes": (2, 0, 1)},
-    {"property": "imMean", "transpose_axes": (2, 0, 1)},
-    {"property": "imMean", "transpose_axes": (2, 0, 1)},
-]
-REGION_POINTS_FILES = [
-    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_eye-r_atlas_brain/dlc_output/region_points.pkl",
-    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_fl-r_atlas_brain/dlc_output/region_points.pkl",
-    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_hl-r_atlas_brain/dlc_output/region_points.pkl",
-    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_whisker-l_atlas_brain/dlc_output/region_points.pkl",
+ISOFLURANE_REGION_POINTS = [
+    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_eye-r_atlas_brain/dlc_output/region_points.pkl",
+    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_fl-r_atlas_brain/dlc_output/region_points.pkl",
+    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_hl-r_atlas_brain/dlc_output/region_points.pkl",
+    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_whisker-l_atlas_brain/dlc_output/region_points.pkl",
     "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/Eye_R.mat",
     "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/HL_R.mat",
     "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/HL_R.mat",
     "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/HL_R.mat",
 ]
+ISOFLURANE_TITLES = [
+    "Eye-R MesoNet",
+    "FL-R MesoNet",
+    "HL-R MesoNet",
+    "Whisker-L MesoNet",
+    "Eye-R MATLAB",
+    "FL-R MATLAB",
+    "HL-R MATLAB",
+    "Whisker-L MATLAB",
+]
+ISOFLURANE_ROWS = 2
 
 
 class Controller:
@@ -68,18 +187,15 @@ class View(ttk.Frame):
                  pupil_filename: str):
         super().__init__(parent)
 
-        assert (
-            len(FILES) == len(OFFSETS) == len(KWARGS) == len(REGION_POINTS_FILES)
-        )
-
-        self.n_plots = len(FILES)
-
-        self.series = []
+        self.n_plots = len(ISOFLURANE_ARGS)
+        assert self.n_plots % ISOFLURANE_ROWS == 0
+        self.collection = ImageSeriesCollection(ISOFLURANE_ARGS[0],
+                                                *ISOFLURANE_ARGS[1:])
         self.masks = []
-        for file, kwargs, region_points_file in zip(FILES, KWARGS, REGION_POINTS_FILES):
-            self.series.append(
-                    ImageSeriesCreator.create(file, 256, 256, "all", **kwargs))
-            masks_manager = MasksManager(region_points_file, 256, 256)
+        for i, region_points_file in enumerate(ISOFLURANE_REGION_POINTS):
+            masks_manager = MasksManager(region_points_file,
+                                         ISOFLURANE_ARGS[i].image_width,
+                                         ISOFLURANE_ARGS[i].image_height)
             mask = np.logical_or.reduce(masks_manager.masks)
             mask = np.ma.masked_where(mask == 0, mask)
             self.masks.append(mask)
@@ -106,7 +222,8 @@ class View(ttk.Frame):
         self.plots = []
         self.figure = Figure(figsize=(200, 100), dpi=5)
         for i in range(self.n_plots):
-            self.plots.append(self.figure.add_subplot(1, self.n_plots, i + 1))
+            self.plots.append(self.figure.add_subplot(
+                    ISOFLURANE_ROWS, self.n_plots // ISOFLURANE_ROWS, i + 1))
         self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
         self.canvas.get_tk_widget().grid(row=2, column=0)
 
@@ -158,19 +275,12 @@ class View(ttk.Frame):
         )
         self.slider_label.config(text=label_text)
 
+        images = self.collection.get_frames(self.slider_value - 1)
         for i in range(self.n_plots):
             self.plots[i].clear()
-            self.plots[i].set_title(TITLES[i])
-            self.plots[i].imshow(self.series[i].get_frame(self.slider_value - 1))
+            self.plots[i].set_title(ISOFLURANE_TITLES[i])
+            self.plots[i].imshow(images[i])
             self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
-
-        # self.plot1.clear()
-        # self.plot1.imshow(
-        #         self.mesoscale_image_series.get_frame(self.slider_value - self.min_slider_value))
-
-        # self.plot2.clear()
-        # self.plot2.imshow(
-        #         self.pupil_video_series.get_frame(self.slider_value - 1))
 
         self.canvas.draw()
 

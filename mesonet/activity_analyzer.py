@@ -419,10 +419,8 @@ def fft(args):
     masks_manager = MasksManager(args.region_points_file,
                                  args.image_width,
                                  args.image_height)
-    image_series = ImageSeriesCreator.create(args.image_file,
-                                             args.image_width,
-                                             args.image_height,
-                                             args.n_frames)
+    image_series = ImageSeriesCreator.create_cached_image_series(
+            args.image_file, args.image_width, args.image_height, args.n_frames)
 
     fft_values = [[] for _ in range(masks_manager.n_regions)]
 
@@ -451,10 +449,8 @@ def activity_complements(args):
                                  args.image_height,
                                  use_center_of_mass=args.use_com,
                                  square_center_of_mass_points=args.square_com)
-    image_series = ImageSeriesCreator.create(args.image_file,
-                                             args.image_width,
-                                             args.image_height,
-                                             args.n_frames)
+    image_series = ImageSeriesCreator.create_cached_image_series(
+            args.image_file, args.image_width, args.image_height, args.n_frames)
     # image_series = ImageSeriesCreator.create(args.image_file,
     #                                          args.image_width,
     #                                          args.image_height,
@@ -594,10 +590,8 @@ def activity(args):
     masks_manager = MasksManager(args.region_points_file,
                                  args.image_width,
                                  args.image_height)
-    image_series = ImageSeriesCreator.create(args.image_file,
-                                             args.image_width,
-                                             args.image_height,
-                                             args.n_frames)
+    image_series = ImageSeriesCreator.create_cached_image_series(
+            args.image_file, args.image_width, args.image_height, args.n_frames)
 
     plt.imshow(masks_manager.masks[0])
     plt.show()
@@ -631,10 +625,8 @@ def seed_pixel_map(args):
     assert False, "Did you check that the above image path is correct?"
     background_image = cv2.imread(BACKGROUND_IMAGE, cv2.IMREAD_GRAYSCALE)
 
-    image_series = ImageSeriesCreator.create(args.image_file,
-                                             args.image_width,
-                                             args.image_height,
-                                             args.n_frames)
+    image_series = ImageSeriesCreator.create_cached_image_series(
+            args.image_file, args.image_width, args.image_height, args.n_frames)
 
     data = np.zeros((args.n_frames,
                      args.image_height,

@@ -86,7 +86,7 @@ def main():
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
 
-    image_series = ImageSeriesCreator.create(
+    image_series = ImageSeriesCreator.create_cached_image_series(
             MESOSCALE_FILE, 256, 256, "all", property="imMean",
             transpose_axes=(2, 0, 1))
     masks_manager = MasksManager(REGION_POINTS_FILE, 256, 256)

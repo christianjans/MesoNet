@@ -7,7 +7,6 @@ import matplotlib as mpl
 import numpy as np
 
 from helpers.image_series import ImageSeriesCreator
-from helpers.video_series import VideoSeries
 
 PUPIL_EVENT_FRAMES = [
     313,
@@ -57,11 +56,10 @@ def main():
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
 
-    image_series = ImageSeriesCreator.create(MESOSCALE_PREPROCESSED_FILENAME,
-                                             128,
-                                             128,
-                                             "all")
-    video_series = VideoSeries(PUIPIL_FILENAME)
+    image_series = ImageSeriesCreator.create_cached_image_series(
+            MESOSCALE_PREPROCESSED_FILENAME, 128, 128, "all")
+    video_series = ImageSeriesCreator.create_uncached_image_series(
+            PUIPIL_FILENAME)
     pdata: np.ndarray = np.genfromtxt(PUPILLOMETRY_CSV_FILE, delimiter=";")
     pdata_interval = int(pdata[1][0] - pdata[0][0])
     pdata = {int(frame): pupil_size for frame, pupil_size in pdata}

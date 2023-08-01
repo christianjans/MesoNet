@@ -2,6 +2,7 @@ import argparse
 import os
 from typing import List, Union
 
+import cv2
 import numpy as np
 import PIL.Image
 import scipy
@@ -10,12 +11,24 @@ BIG_ENDIAN_F32 = ">f4"
 
 
 class ImageSeries:
+    def __init__(self, filename: str):
+        self._filename = filename
+
+    @property
+    def filename(self) -> str:
+        return self._filename
+
+    def get_frame(self, frame_index: int) -> np.ndarray:
+        raise NotImplementedError
+
+
+class CachedImageSeries(ImageSeries):
     def __init__(self,
                  filename: str,
                  image_width: int,
                  image_height: int,
                  n_frames: Union[int, str] = "all"):
-        self._filename = filename
+        super().__init__(filename)
         self._image_width = image_width
         self._image_height = image_height
         self._n_frames = n_frames
@@ -25,10 +38,6 @@ class ImageSeries:
                                                     self._n_frames)
         self._current_image_index = 0
         self._max_image_index = len(self._image_array)
-
-    @property
-    def filename(self) -> str:
-        return self._filename
 
     @property
     def image_array(self) -> np.ndarray:
@@ -53,11 +62,19 @@ class ImageSeries:
                            filename: str,
                            image_width: int,
                            image_height: int,
-                           n_frames: Union[str, int]) -> np.ndarray:
+                           n_frames: Union[int, str]) -> np.ndarray:
         raise NotImplementedError
 
 
-class RawImageSeries(ImageSeries):
+class UncachedImageSeries(ImageSeries):
+    def __init__(self, filename: str):
+        super().__init__(filename)
+    
+    def get_frame(self, frame_index: int) -> np.ndarray:
+        return super().get_frame(frame_index)
+
+
+class RawImageSeries(CachedImageSeries):
     def __init__(self,
                  filename: str,
                  image_width: int,
@@ -81,7 +98,7 @@ class RawImageSeries(ImageSeries):
 
 
 # Modified from https://stackoverflow.com/questions/9627652/split-multi-page-tiff-with-python
-class TiffImageSeries(ImageSeries):
+class TiffImageSeries(CachedImageSeries):
     def __init__(self,
                  filename: str,
                  image_width: int,
@@ -121,7 +138,7 @@ class TiffImageSeries(ImageSeries):
         return image_array
 
 
-class MatImageSeries(ImageSeries):
+class MatImageSeries(CachedImageSeries):
     def __init__(self,
                  filename: str,
                  image_width: int,
@@ -147,13 +164,40 @@ class MatImageSeries(ImageSeries):
         return image_array
 
 
+class VideoSeries(UncachedImageSeries):
+    def __init__(self, filename: str):
+        super().__init__(filename)
+        self._video_capture = cv2.VideoCapture(filename)
+        self._n_frames = self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
+        self._fps = self._video_capture.get(cv2.CAP_PROP_FPS)
+
+    @property
+    def n_frames(self) -> int:
+        return self._n_frames
+
+    @property
+    def fps(self) -> float:
+        return self._fps
+
+    def get_frame(self, frame_index: int) -> np.ndarray:
+        if frame_index < 0 or frame_index >= self._n_frames:
+            raise ValueError(f"Frame index {frame_index} is out of range")
+
+        self._video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        success, frame = self._video_capture.read()
+
+        if not success:
+            raise RuntimeError(f"Unable to load frame index {frame_index}")
+        return frame
+
+
 class ImageSeriesCreator:
     @staticmethod
-    def create(filename: str,
-               image_width: int,
-               image_height: int,
-               n_frames: Union[int, str],
-               **kwargs) -> ImageSeries:
+    def create_cached_image_series(filename: str,
+                                   image_width: int,
+                                   image_height: int,
+                                   n_frames: Union[int, str],
+                                   **kwargs) -> CachedImageSeries:
         if filename.endswith(".tif") or filename.endswith(".tiff"):
             return TiffImageSeries(filename,
                                    image_width,
@@ -173,15 +217,20 @@ class ImageSeriesCreator:
         else:
             raise ValueError(f"Unsupported image filename '{filename}'")
 
+    @staticmethod
+    def create_uncached_image_series(filename: str) -> UncachedImageSeries:
+        if filename.endswith(".avi"):
+            return VideoSeries(filename)
+        else:
+            raise ValueError(f"Unsupported image filename '{filename}'")
+
 
 def save_images(args):
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
-    image_series = ImageSeriesCreator.create(args.image_file,
-                                             args.image_width,
-                                             args.image_height,
-                                             "all")
+    image_series = ImageSeriesCreator.create_cached_image_series(
+            args.image_file, args.image_width, args.image_height, "all")
 
     for image_to_save in args.images_to_save:
         image_array = image_series.get_frame(image_to_save)
