@@ -16,6 +16,10 @@ class ImageSeries:
     def filename(self) -> str:
         return self._filename
 
+    @property
+    def n_frames(self) -> int:
+        raise NotImplementedError
+
     def get_frame(self, frame_index: int) -> np.ndarray:
         raise NotImplementedError
 
@@ -36,6 +40,10 @@ class CachedImageSeries(ImageSeries):
                                                     self._n_frames)
         self._current_image_index = 0
         self._max_image_index = len(self._image_array)
+
+    @property
+    def n_frames(self) -> int:
+        return len(self._image_array)
 
     @property
     def image_array(self) -> np.ndarray:
@@ -67,7 +75,11 @@ class CachedImageSeries(ImageSeries):
 class UncachedImageSeries(ImageSeries):
     def __init__(self, filename: str):
         super().__init__(filename)
-    
+
+    @property
+    def n_frames(self) -> int:
+        return super().n_frames
+
     def get_frame(self, frame_index: int) -> np.ndarray:
         return super().get_frame(frame_index)
 

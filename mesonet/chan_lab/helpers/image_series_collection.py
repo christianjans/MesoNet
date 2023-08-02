@@ -23,7 +23,7 @@ class ImageSeriesCollection:
     def __init__(self,
                  reference: ImageSeriesCollectionArgs,
                  *args: ImageSeriesCollectionArgs):
-        assert reference.frame_index_offset == 0
+        # assert reference.frame_index_offset == 0
 
         self._image_series: List[ImageSeries] = []
         self._offsets: List[int] = []
@@ -31,6 +31,9 @@ class ImageSeriesCollection:
 
         args = list(args)
         args.insert(ImageSeriesCollection.REFERENCE_INDEX, reference)
+
+        self._min_frame_index = int(0)
+        self._max_frame_index = int(2 ** 32 - 1)
 
         for arg in args:
             assert arg.frame_index_offset >= 0
@@ -48,8 +51,24 @@ class ImageSeriesCollection:
                         arg.file)
             self._image_series.append(image_series)
 
+            if arg.frame_index_offset > self._min_frame_index:
+                self._min_frame_index = arg.frame_index_offset
+            if arg.frame_index_offset + image_series.n_frames - 1 < self._max_frame_index:
+                self._max_frame_index = arg.frame_index_offset + image_series.n_frames - 1
+
+        assert self._offsets[ImageSeriesCollection.REFERENCE_INDEX] < min(self._offsets[1:])
+
+    @property
+    def min_frame_index(self) -> int:
+        return self._min_frame_index
+    
+    @property
+    def max_frame_index(self) -> int:
+        return self._max_frame_index
+
     def get_frames(self, frame_index: int) -> List[np.ndarray]:
-        assert frame_index >= max(self._offsets)
+        assert frame_index >= self._min_frame_index
+        assert frame_index <= self._max_frame_index
 
         images = []
         for i, image_series in enumerate(self._image_series):
@@ -64,10 +83,12 @@ class ImageSeriesCollection:
                               offset: int,
                               fps: float) -> int:
         reference_fps = self._fpses[ImageSeriesCollection.REFERENCE_INDEX]
+        reference_offset = self._offsets[ImageSeriesCollection.REFERENCE_INDEX]
 
+        reference_time = reference_offset / reference_fps
         frame_time = frame_index / reference_fps
         start_time = offset / reference_fps
-        diff_time = frame_time - start_time
+        diff_time = reference_time + frame_time - start_time
 
         relative_frame_index = diff_time * fps
         relative_frame_index = int(round(relative_frame_index))

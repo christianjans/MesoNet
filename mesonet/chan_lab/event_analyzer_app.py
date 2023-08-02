@@ -24,100 +24,152 @@ MESOSCALE_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/isofl
 PUPIL_START_FRAME_INDEX = PUPIL_EVENT_FRAME - MESOSCALE_EVENT_FRAME + 1 - 1
 
 ISOFLURANE_ARGS = [
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=256,
+    #     image_height=256,
+    #     frame_index_offset=0,
+    #     kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+    # ),
+
+    # ImageSeriesCollectionArgs(
+    #     file="/Users/christian/Documents/summer2023/matlab/my_data/full2/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27478.raw",
+    #     cache=True,
+    #     fps=30.0,
+    #     image_width=128,
+    #     image_height=128,
+    #     frame_index_offset=0,
+    #     kwargs={},
+    # ),
+
     ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
+        file="/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102833-0000.avi",
+        cache=False,
+        fps=30.0003,
+        image_width=128,
+        image_height=128,
         frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+        kwargs={},
     ),
     ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+        file="/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102834-0000.avi",
+        cache=False,
+        fps=30.0003,
+        image_width=128,
+        image_height=128,
+        frame_index_offset=26,
+        kwargs={},
     ),
     ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
+        file="/Users/christian/Documents/summer2023/matlab/my_data/full2/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27478.raw",
         cache=True,
         fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
-    ),
-    ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
-    ),
-    ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
-    ),
-    ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
-    ),
-    ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
-    ),
-    ImageSeriesCollectionArgs(
-        file="/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/imMean.mat",
-        cache=True,
-        fps=30.0,
-        image_width=256,
-        image_height=256,
-        frame_index_offset=0,
-        kwargs={"property": "imMean", "transpose_axes": (2, 0, 1)},
+        image_width=128,
+        image_height=128,
+        frame_index_offset=363,
+        kwargs={},
     ),
 ]
 ISOFLURANE_REGION_POINTS = [
-    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_eye-r_atlas_brain/dlc_output/region_points.pkl",
-    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_fl-r_atlas_brain/dlc_output/region_points.pkl",
-    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_hl-r_atlas_brain/dlc_output/region_points.pkl",
-    "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_whisker-l_atlas_brain/dlc_output/region_points.pkl",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/Eye_R.mat",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/HL_R.mat",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/HL_R.mat",
-    "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/HL_R.mat",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_eye-r_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_fl-r_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_hl-r_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_whisker-l_atlas_brain/dlc_output/region_points.pkl",
+    # "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/Eye_R.mat",
+    # "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_fl-r/HL_R.mat",
+    # "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_hl-r/HL_R.mat",
+    # "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_whisker-l/HL_R.mat",
+
+    # None,
+
+    None,  # TODO
+    None,
+    None,
 ]
 ISOFLURANE_TITLES = [
-    "Eye-R MesoNet",
-    "FL-R MesoNet",
-    "HL-R MesoNet",
-    "Whisker-L MesoNet",
-    "Eye-R MATLAB",
-    "FL-R MATLAB",
-    "HL-R MATLAB",
-    "Whisker-L MATLAB",
+    # "Eye-R MesoNet",
+    # "FL-R MesoNet",
+    # "HL-R MesoNet",
+    # "Whisker-L MesoNet",
+    # "Eye-R MATLAB",
+    # "FL-R MATLAB",
+    # "HL-R MATLAB",
+    # "Whisker-L MATLAB",
+
+    # "title",
+
+    "Pupil",
+    "Body",
+    "Mesoscale",
 ]
-ISOFLURANE_ROWS = 2
+# ISOFLURANE_ROWS = 2
+# ISOFLURANE_ROWS = 1
+ISOFLURANE_ROWS = 1
 
 
 class Controller:
@@ -137,6 +189,9 @@ class View(ttk.Frame):
                                                 *ISOFLURANE_ARGS[1:])
         self.masks = []
         for i, region_points_file in enumerate(ISOFLURANE_REGION_POINTS):
+            if region_points_file is None:
+                self.masks.append(None)
+                continue
             masks_manager = MasksManager(region_points_file,
                                          ISOFLURANE_ARGS[i].image_width,
                                          ISOFLURANE_ARGS[i].image_height)
@@ -144,8 +199,8 @@ class View(ttk.Frame):
             mask = np.ma.masked_where(mask == 0, mask)
             self.masks.append(mask)
 
-        self.min_slider_value = 1
-        self.max_slider_value = 201
+        self.min_slider_value = self.collection.min_frame_index + 1
+        self.max_slider_value = self.collection.max_frame_index + 1
         self.slider_value = self.min_slider_value
 
         self.slider_label = ttk.Label(self, text="")
@@ -224,7 +279,8 @@ class View(ttk.Frame):
             self.plots[i].clear()
             self.plots[i].set_title(ISOFLURANE_TITLES[i])
             self.plots[i].imshow(images[i])
-            self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
+            if self.masks[i] is not None:
+                self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
 
         self.canvas.draw()
 
