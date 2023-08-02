@@ -10,6 +10,12 @@ from chan_lab.helpers.image_series_collection import (
     ImageSeriesCollection,
     ImageSeriesCollectionArgs,
 )
+from chan_lab.helpers.plotting import (
+    ImagePlotterArgs,
+    PlotterCollection,
+    PupillometryPlotterArgs,
+    VideoPlotterArgs,
+)
 
 PUPIL_EVENT_FRAME = 313
 MESOSCALE_EVENT_FRAME = 88
@@ -172,6 +178,35 @@ ISOFLURANE_TITLES = [
 ISOFLURANE_ROWS = 1
 
 
+pupil_args = VideoPlotterArgs(
+    filename="/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102833-0000.avi",
+    fps=30.0003,
+    offset=0,
+    title="Pupil",
+)
+body_args = VideoPlotterArgs(
+    filename="/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102834-0000.avi",
+    fps=30.0003,
+    offset=26,
+    title="Body",
+)
+mesoscale_args = ImagePlotterArgs(
+    filename="/Users/christian/Documents/summer2023/matlab/my_data/full2/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27478.raw",
+    fps=30.0,
+    offset=363,
+    title="Mesoscale",
+    image_width=128,
+    image_height=128,
+    kwargs={},
+)
+pupillometry_args = PupillometryPlotterArgs(
+    filename="/Users/christian/Documents/summer2023/pupillometry_matlab/example_full2/fc2_save_2023-07-31-102833-0000_radii.mat",
+    fps=(30.0003 / 2),
+    offset=(26 + 2),
+    title="Pupillometry"
+)
+
+
 class Controller:
     pass
 
@@ -183,21 +218,14 @@ class View(ttk.Frame):
                  pupil_filename: str):
         super().__init__(parent)
 
-        self.n_plots = len(ISOFLURANE_ARGS)
-        assert self.n_plots % ISOFLURANE_ROWS == 0
-        self.collection = ImageSeriesCollection(ISOFLURANE_ARGS[0],
-                                                *ISOFLURANE_ARGS[1:])
-        self.masks = []
-        for i, region_points_file in enumerate(ISOFLURANE_REGION_POINTS):
-            if region_points_file is None:
-                self.masks.append(None)
-                continue
-            masks_manager = MasksManager(region_points_file,
-                                         ISOFLURANE_ARGS[i].image_width,
-                                         ISOFLURANE_ARGS[i].image_height)
-            mask = np.logical_or.reduce(masks_manager.masks)
-            mask = np.ma.masked_where(mask == 0, mask)
-            self.masks.append(mask)
+        self.figure = Figure(figsize=(200, 100), dpi=8)
+        self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
+        self.canvas.get_tk_widget().grid(row=2, column=0)
+
+        self.collection = PlotterCollection(
+                self.figure,
+                [pupil_args, body_args, mesoscale_args, pupillometry_args],
+                rows=2)
 
         self.min_slider_value = self.collection.min_frame_index + 1
         self.max_slider_value = self.collection.max_frame_index + 1
@@ -217,14 +245,6 @@ class View(ttk.Frame):
 
         parent.bind("<Left>", lambda _: self.slider.set(self.slider.get() - 1))
         parent.bind("<Right>", lambda _: self.slider.set(self.slider.get() + 1))
-
-        self.plots = []
-        self.figure = Figure(figsize=(200, 100), dpi=5)
-        for i in range(self.n_plots):
-            self.plots.append(self.figure.add_subplot(
-                    ISOFLURANE_ROWS, self.n_plots // ISOFLURANE_ROWS, i + 1))
-        self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
-        self.canvas.get_tk_widget().grid(row=2, column=0)
 
         self.slider_changed(str(self.slider_value))
 
@@ -274,13 +294,15 @@ class View(ttk.Frame):
         )
         self.slider_label.config(text=label_text)
 
-        images = self.collection.get_frames(self.slider_value - 1)
-        for i in range(self.n_plots):
-            self.plots[i].clear()
-            self.plots[i].set_title(ISOFLURANE_TITLES[i])
-            self.plots[i].imshow(images[i])
-            if self.masks[i] is not None:
-                self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
+        self.collection.update_plots(self.slider_value - 1)
+
+        # images = self.collection.get_frames(self.slider_value - 1)
+        # for i in range(self.n_plots):
+        #     self.plots[i].clear()
+        #     self.plots[i].set_title(ISOFLURANE_TITLES[i])
+        #     self.plots[i].imshow(images[i])
+        #     if self.masks[i] is not None:
+        #         self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
 
         self.canvas.draw()
 
