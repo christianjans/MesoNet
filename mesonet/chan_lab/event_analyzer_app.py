@@ -1,6 +1,8 @@
+import time
 import tkinter as tk
 import tkinter.ttk as ttk
 
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
@@ -202,7 +204,7 @@ mesoscale_args = ImagePlotterArgs(
 pupillometry_args = PupillometryPlotterArgs(
     filename="/Users/christian/Documents/summer2023/pupillometry_matlab/example_full2/fc2_save_2023-07-31-102833-0000_radii.mat",
     fps=(30.0003 / 2),
-    offset=(26 + 2),
+    offset=(0 + 2),
     title="Pupillometry"
 )
 
@@ -212,6 +214,8 @@ class Controller:
 
 
 class View(ttk.Frame):
+    UPDATE_INTERVAL = 0.10  # Minimum interval between plot updates.
+
     def __init__(self,
                  parent: tk.Tk,
                  mesoscale_filename: str,
@@ -223,6 +227,7 @@ class View(ttk.Frame):
         self.canvas.get_tk_widget().grid(row=2, column=0)
 
         self.collection = PlotterCollection(
+                self.canvas,
                 self.figure,
                 [pupil_args, body_args, mesoscale_args, pupillometry_args],
                 rows=2)
@@ -245,6 +250,8 @@ class View(ttk.Frame):
 
         parent.bind("<Left>", lambda _: self.slider.set(self.slider.get() - 1))
         parent.bind("<Right>", lambda _: self.slider.set(self.slider.get() + 1))
+
+        self.update_time = time.time()
 
         self.slider_changed(str(self.slider_value))
 
@@ -282,6 +289,11 @@ class View(ttk.Frame):
         # self.slider_changed(str(self.slider_value))
 
     def slider_changed(self, value: str):
+        # Control how fast the plots can be updated.
+        if time.time() - self.update_time < View.UPDATE_INTERVAL:
+            return
+        self.update_time = time.time()
+
         self.slider_value = int(float(value))
 
         # label_text = (
@@ -290,7 +302,7 @@ class View(ttk.Frame):
         # )
         label_text = (
             f"Frame {self.slider_value}/{self.max_slider_value} "
-            f"({self.slider_value / 30.0:.3f} s)"
+            f"({self.slider_value / 30.0003:.3f} s)"
         )
         self.slider_label.config(text=label_text)
 
@@ -304,7 +316,7 @@ class View(ttk.Frame):
         #     if self.masks[i] is not None:
         #         self.plots[i].imshow(self.masks[i], alpha=0.3, cmap="autumn")
 
-        self.canvas.draw()
+        # self.canvas.draw()
 
 
 class App(tk.Tk):
