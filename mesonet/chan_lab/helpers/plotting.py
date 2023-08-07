@@ -35,7 +35,7 @@ class ImagePlotterArgs(PlotterArgs):
     image_width: int
     image_height: int
     kwargs: Dict[str, Any]
-    region_points: Union[str, Dict[Tuple[int, int], int]] = None
+    region_points: str = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -94,6 +94,8 @@ class PupillometryPlotter(SeriesPlotter):
         # left_delta, right_delta = int(start_frame - (frame_index + 1)), int(end_frame - (frame_index + 1))
 
         # print(f"left_delta = {left_delta}, right_delta = {right_delta}")
+        left, right = int(frame_index - WINDOW), int(frame_index + WINDOW + 1)
+        x = [int(2 * i) for i in range(left - frame_index, right - frame_index)]
 
         if not started:
             self._axes_data = axes.plot([])[0]
@@ -104,8 +106,12 @@ class PupillometryPlotter(SeriesPlotter):
             axes.set_xlim(visible_x[0], visible_x[-1])
             axes.set_ylim(np.min(self._data[:, 1]), np.max(self._data[:, 1]))
             # axes.set_xticklabels(np.array([int(i) for i in range(left_delta, right_delta)]))
+            # axes.set_xticklabels([i for i in range(WINDOW)])
+            # axes.set_xticks(WINDOW)
+            axes.set_xticks(visible_x[::10])
+            axes.set_xticklabels(x[::10])
         else:
-            self._axes_data.set_data(visible_x, visible_y)
+            self._axes_data.set_data(self._data[:, 0], self._data[:, 1])
             # axes.set_title(self.title)
             axes.draw_artist(self._axes_data)
             axes.axvline(self._data[frame_index, 0])
@@ -134,10 +140,14 @@ class ImagePlotter(SeriesPlotter):
                                                               **args.kwargs)
         self._axes_image = None
 
-        self._mask = MasksManager("/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full2_atlas_brain/dlc_output/region_points_2.pkl", 128, 128)
-        self._mask = self._mask.masks
-        self._mask = np.logical_or.reduce(self._mask, axis=0)
-        self._mask = np.ma.masked_where(self._mask == 0, self._mask)
+        self._mask = None
+        if args.region_points:
+            self._mask = MasksManager(args.region_points,
+                                      args.image_width,
+                                      args.image_height)
+            self._mask = self._mask.masks
+            self._mask = np.logical_or.reduce(self._mask, axis=0)
+            self._mask = np.ma.masked_where(self._mask == 0, self._mask)
 
     @property
     def n_frames(self) -> int:
@@ -150,8 +160,9 @@ class ImagePlotter(SeriesPlotter):
         if not started:
             self._axes_image = axes.imshow(np.zeros_like(frame),
                                            vmin=-1, vmax=1)
-            self._axes_image = axes.imshow(self._mask, alpha=0.8, vmin=-1,
-                                           vmax=1)
+            if self._mask is not None:
+                self._axes_image = axes.imshow(self._mask, alpha=0.8, vmin=-1,
+                                            vmax=1)
             axes.set_title(self.title)
         else:
             self._axes_image.set_data(frame)
