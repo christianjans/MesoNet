@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import PIL
+from PIL import ImageEnhance
 
 from chan_lab.helpers.image_series import ImageSeriesCreator
 
@@ -22,8 +23,13 @@ def save_images(args):
         print(np.max(image_array))
         print(np.min(image_array))
         print(image_array.dtype)
+
         image_array = np.pad(image_array, (args.padding,), constant_values=0)
+
         image = PIL.Image.fromarray(image_array)
+        enhancer = ImageEnhance.Brightness(image)
+        image = enhancer.enhance(args.brightness)
+
         image.save(os.path.join(args.save_dir, f"{image_to_save}.png"))
 
 
@@ -42,5 +48,6 @@ if __name__ == "__main__":
     parser.add_argument("--padding", type=int, default=0)
     parser.add_argument("--image-width", type=int, default=128)
     parser.add_argument("--image-height", type=int, default=128)
+    parser.add_argument("--brightness", type=float, default=1.0)
     args = parser.parse_args()
     save_images(args)
