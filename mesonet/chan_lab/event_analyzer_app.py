@@ -194,19 +194,49 @@ body_args = VideoPlotterArgs(
 )
 mesoscale_args = ImagePlotterArgs(
     filename="/Users/christian/Documents/summer2023/matlab/my_data/full2/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27478.raw",
-    fps=30.0,
+    fps=29.98,
     offset=363,
     title="Mesoscale",
     image_width=128,
     image_height=128,
     kwargs={},
+    region_points="/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full2_atlas_brain/dlc_output/region_points_2.pkl",
 )
 pupillometry_args = PupillometryPlotterArgs(
-    filename="/Users/christian/Documents/summer2023/pupillometry_matlab/example_full2/fc2_save_2023-07-31-102833-0000_radii.mat",
+    filename="/Users/christian/Documents/summer2023/pupillometry_matlab/example_full2/clean.mat",
     fps=(30.0003 / 2),
     offset=(0 + 2),
     title="Pupillometry"
 )
+
+# pupil_args = VideoPlotterArgs(
+#     filename="/Users/christian/Documents/summer2023/matlab/my_data/full3/fc2_save_2023-08-01-105516-0000.avi",
+#     fps=30.0003,
+#     offset=0,
+#     title="Pupil",
+# )
+# body_args = VideoPlotterArgs(
+#     filename="/Users/christian/Documents/summer2023/matlab/my_data/full3/fc2_save_2023-08-01-105517-0000.avi",
+#     fps=30.0003,
+#     offset=34,
+#     title="Body",
+# )
+# mesoscale_args = ImagePlotterArgs(
+#     filename="/Users/christian/Documents/summer2023/matlab/my_data/full3/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27438.raw",
+#     fps=29.98,
+#     offset=262,
+#     title="Mesoscale",
+#     image_width=128,
+#     image_height=128,
+#     kwargs={},
+#     region_points="/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full3_1.5_atlas_brain/dlc_output/region_points_6.pkl",
+# )
+# pupillometry_args = PupillometryPlotterArgs(
+#     filename="/Users/christian/Documents/summer2023/pupillometry_matlab/example_full3/clean.mat",
+#     fps=(30.0003 / 2),
+#     offset=(0 + 10),  # TODO
+#     title="Pupillometry"
+# )
 
 
 class Controller:
