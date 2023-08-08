@@ -1,3 +1,4 @@
+import argparse
 import os
 from typing import List
 
@@ -6,77 +7,57 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 
-from chan_lab.helpers.image_series import ImageSeriesCreator
-
-PUPIL_EVENT_FRAMES = [
-    313,
-    3916,
-    7520,
-    11123,
-    14727,
-    18330,
-    21912,
-    25515,
-    29119,
-    32722,
-]
-MESOSCALE_START_EVENT_FRAME = 88
-
-PUIPIL_FILENAME = "/Users/christian/Downloads/fc2_save_2023-02-09-135224-0000.avi"
-MESOSCALE_PREPROCESSED_FILENAME = "/Users/christian/Documents/summer2023/matlab/my_data/flash1/02_awake_8x8_30hz_36500fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-36480_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-36480.raw"
-PUPILLOMETRY_CSV_FILE = "/Users/christian/Documents/summer2023/pupillometry_matlab/example_flash1/fc2_save_2023-02-09-135224-0000Pupil Radii.csv"
-SAVE_DIR = "/Users/christian/Documents/summer2023/MesoNet/data_events/test/"
-
-P_FPS = cv2.VideoCapture(PUIPIL_FILENAME).get(cv2.CAP_PROP_FPS)
-M_FPS = float(os.path.basename(MESOSCALE_PREPROCESSED_FILENAME).split("_")[5][2:-2])
-
-M_F_BEFORE = -20
-M_F_AFTER = 20
-M_F_TOTAL = M_F_AFTER - M_F_BEFORE
-
-ROWS = 4
+from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
+from mesonet.chan_lab.helpers.utils import config_to_namespace
 
 
-def time_from_pframe(pframe: int) -> float:
-    return pframe * P_FPS
+def time_from_pframe(pframe: int, p_fps: float) -> float:
+    return pframe * p_fps
 
 
-def pframe_to_mframe(pframe: int) -> int:
-    abs_time = time_from_pframe(pframe)
-    m_start_time = time_from_pframe(
-            PUPIL_EVENT_FRAMES[0] - MESOSCALE_START_EVENT_FRAME)
-    frame = round((abs_time - m_start_time) / M_FPS)
+def pframe_to_mframe(pframe: int,
+                     p_fps: float,
+                     m_fps: float,
+                     pframe_reference: int,
+                     mframe_reference: int) -> int:
+    abs_time = time_from_pframe(pframe, p_fps)
+    m_start_time = time_from_pframe(pframe_reference - mframe_reference, p_fps)
+    frame = round((abs_time - m_start_time) / m_fps)
 
     if frame <= 0:
         raise ValueError(f"Invalid frame number: {frame}")
     return frame
 
 
-def main():
-    if not os.path.exists(SAVE_DIR):
-        os.makedirs(SAVE_DIR)
+def main(args: argparse.Namespace):
+    if not os.path.exists(args.save_dir):
+        os.makedirs(args.save_dir)
 
     image_series = ImageSeriesCreator.create_cached_image_series(
-            MESOSCALE_PREPROCESSED_FILENAME, 128, 128, "all")
+            args.mesoscale_file, 128, 128, "all")
     video_series = ImageSeriesCreator.create_uncached_image_series(
-            PUIPIL_FILENAME)
-    pdata: np.ndarray = np.genfromtxt(PUPILLOMETRY_CSV_FILE, delimiter=";")
+            args.pupil_file)
+    pdata: np.ndarray = np.genfromtxt(args.pupillometry_file, delimiter=";")
     pdata_interval = int(pdata[1][0] - pdata[0][0])
     pdata = {int(frame): pupil_size for frame, pupil_size in pdata}
+    p_fps = cv2.VideoCapture(args.pupil_file).get(cv2.CAP_PROP_FPS)
+    m_fps = float(os.path.basename(args.mesoscale_file).split("_")[5][2:-2])
+    frames_total = args.frames_after - args.frames_before
 
     pupil_sizes: List[List[float]] = []
     video_frames: List[List[np.ndarray]] = []
     images: List[List[np.ndarray]] = []
-    for i, pupil_event_frame in enumerate(PUPIL_EVENT_FRAMES):
+    for i, pupil_event_frame in enumerate(args.pupil_event_frames):
         # Collect pupil size data.
         pupil_sizes.append([])
-        for j in range(M_F_BEFORE * pdata_interval, M_F_AFTER * pdata_interval):
+        for j in range(args.frames_before * pdata_interval,
+                       args.frames_after * pdata_interval):
             if pupil_event_frame - 1 + j in pdata:
                 pupil_sizes[i].append(pdata[pupil_event_frame - 1 + j])
 
         # Collect video data.
         video_frames.append([])
-        for j in range(M_F_BEFORE, M_F_AFTER):
+        for j in range(args.frames_before, args.frames_after):
             video_frame = video_series.get_frame(pupil_event_frame - 1 + j)
             video_frame = np.mean(video_frame, axis=-1)
             video_frame = video_frame.astype(np.uint8)
@@ -85,12 +66,15 @@ def main():
 
         # Collect mesoscale brain data.
         images.append([])
-        mframe = pframe_to_mframe(pupil_event_frame)
-        for j in range(M_F_BEFORE, M_F_AFTER):
+        mframe = pframe_to_mframe(pupil_event_frame,
+                                  p_fps,
+                                  m_fps,
+                                  args.pupil_event_frames[0],
+                                  args.mesoscale_event_start_frame)
+        for j in range(args.frames_before, args.frames_after):
             images[i].append(image_series.get_frame(mframe - 1 + j))
 
     # Take the average over the collected data.
-    print(np.array(video_frames).shape)
     average_pupil_sizes = np.mean(np.array(pupil_sizes), axis=0)
     std_pupil_sizes = np.std(np.array(pupil_sizes), axis=0)
     average_video_frames = np.mean(np.array(video_frames), axis=0)
@@ -98,26 +82,30 @@ def main():
 
     # Plot the data.
     plt.rcParams.update({'font.size': 5})
-    pticks = [f"{pdata_interval * i / P_FPS:.3f}"
-              for i in range(M_F_BEFORE, M_F_AFTER)]
-    mticks = [f"{i / M_FPS:.3f}" for i in range(M_F_BEFORE, M_F_AFTER)]
+    pticks = [f"{pdata_interval * i / p_fps:.3f}"
+              for i in range(args.frames_before, args.frames_after)]
+    mticks = [f"{i / m_fps:.3f}"
+              for i in range(args.frames_before, args.frames_after)]
 
     pfigure = plt.figure(1)
     paxes = pfigure.gca()
     paxes.set_ylabel("average pupil radius (pixels)")
     paxes.set_xlabel("time (s)")
-    paxes.set_xticks(range(M_F_TOTAL), pticks)
+    paxes.set_xticks(range(frames_total), pticks)
     paxes.plot(average_pupil_sizes)
-    paxes.fill_between(range(M_F_TOTAL),
+    paxes.fill_between(range(frames_total),
                        average_pupil_sizes - std_pupil_sizes,
                        average_pupil_sizes + std_pupil_sizes,
                        alpha=0.5)
 
-    assert M_F_TOTAL % ROWS == 0
+    assert frames_total % args.plot_rows == 0
 
-    mfigure, maxes = plt.subplots(ROWS, M_F_TOTAL // ROWS, dpi=200)
+    mfigure, maxes = plt.subplots(args.plot_rows,
+                                  frames_total // args.plot_rows,
+                                  dpi=200)
     for i, average_image in enumerate(average_images):
-        row, column = i // (M_F_TOTAL // ROWS), i % (M_F_TOTAL // ROWS)
+        row = i // (frames_total // args.plot_rows)
+        column = i % (frames_total // args.plot_rows)
         maxes[row, column].set_title(f"{mticks[i]}s")
         maxes[row, column].axis('off')
         maxes[row, column].imshow(average_image, vmin=-1.0, vmax=1.0)
@@ -126,9 +114,13 @@ def main():
     mfigure.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
     mfigure.tight_layout()
 
-    vfigure, vaxes = plt.subplots(ROWS, M_F_TOTAL // ROWS, dpi=200, figsize=(8, 8))
+    vfigure, vaxes = plt.subplots(args.plot_rows,
+                                  frames_total // args.plot_rows,
+                                  dpi=200,
+                                  figsize=(8, 8))
     for i, average_video_frame in enumerate(average_video_frames):
-        row, column = i // (M_F_TOTAL // ROWS), i % (M_F_TOTAL // ROWS)
+        row = i // (frames_total // args.plot_rows)
+        column = i % (frames_total // args.plot_rows)
         vaxes[row, column].set_title(f"{mticks[i]}s")
         vaxes[row, column].axis('off')
         vaxes[row, column].imshow(average_video_frame, vmin=0, vmax=255, cmap="binary")
@@ -138,4 +130,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True)
+    args = parser.parse_args()
+
+    config_args = config_to_namespace(args.config)
+
+    main(config_args)

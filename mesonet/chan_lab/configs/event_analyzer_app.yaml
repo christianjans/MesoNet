@@ -1,0 +1,42 @@
+plots:
+- {
+  type: "video",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102833-0000.avi",
+    fps: 30.0003,
+    offset: 0,
+    title: "Pupil"
+  }
+}
+- {
+  type: "video",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102834-0000.avi",
+    fps: 30.0003,
+    offset: 26,
+    title: "Body"
+  }
+}
+- {
+  type: "image",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full2/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27478.raw",
+    fps: 29.98,
+    offset: 363,
+    title: "Mesoscale",
+    image_width: 128,
+    image_height: 128,
+    kwargs: {},
+    region_points: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full2_atlas_brain/dlc_output/region_points_2.pkl"
+  }
+}
+- {
+  type: "pupillometry",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/pupillometry_matlab/example_full2/clean.mat",
+    fps: 15.00015,
+    offset: 2,
+    title: "Pupillometry"
+  }
+}
+plot_rows: 2

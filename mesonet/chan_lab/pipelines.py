@@ -4,6 +4,8 @@ import sys
 
 import mesonet
 
+from mesonet.chan_lab.helpers.utils import config_to_namespace
+
 MESONET_PATH = os.getcwd()
 
 os.environ["MESONET_GIT"] = MESONET_PATH
@@ -27,7 +29,7 @@ def process_atlas_brain_pipeline(args):
         mode="test",
         atlas_to_brain_align=True,
         use_voxelmorph=False,
-        use_unet=args.no_unet,
+        use_unet=args.use_unet,
         use_dlc=True,
         sensory_match=False,
         mat_save=False,
@@ -40,7 +42,7 @@ def process_atlas_brain_pipeline(args):
     mesonet.predict_dlc(config_file)
 
 
-def main(args):
+def main(args: argparse.Namespace):
     if not os.path.exists(args.input_dir):
         raise ValueError(f"Input directory '{args.input_dir}' does not exist")
     if not os.path.exists(args.output_dir):
@@ -54,11 +56,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pipeline", type=str, choices=["atlas_brain"],
-                        required=True)
-    parser.add_argument("--input-dir", type=str, required=True)
-    parser.add_argument("--output-dir", type=str, required=True)
-    parser.add_argument("--no-unet", action="store_false")
+    parser.add_argument("--config", type=str, required=True)
     args = parser.parse_args()
 
-    main(args)
+    config_args = config_to_namespace(args.config)
+
+    main(config_args)

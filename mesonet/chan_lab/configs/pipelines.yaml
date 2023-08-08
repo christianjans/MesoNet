@@ -1,0 +1,4 @@
+pipeline: "atlas_brain"
+input_dir: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full3_1.5/atlas_brain/"
+output_dir: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full3_atlas_brain"
+use_unet: true

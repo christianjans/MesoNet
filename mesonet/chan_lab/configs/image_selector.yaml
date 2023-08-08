@@ -1,0 +1,7 @@
+image_file: "/Users/christian/Documents/summer2023/matlab/my_data/full3/02_awake_8x8_30hz_28000fr.tif"
+images_to_save: [0, 1555, 4000, 12000, 16000, 20000, 24000]
+save_dir: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full3_1.0/atlas_brain"
+image_width: 128
+image_height: 128
+padding: 0
+brightness: 1.0

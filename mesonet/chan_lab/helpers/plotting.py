@@ -8,8 +8,8 @@ from matplotlib.axes import Axes
 import numpy as np
 import scipy
 
-from chan_lab.helpers.image_series import ImageSeriesCreator
-from chan_lab.activity_analyzer import MasksManager
+from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
+from mesonet.chan_lab.activity_analyzer import MasksManager
 
 
 @dataclasses.dataclass(frozen=True)
@@ -87,6 +87,7 @@ class PupillometryPlotter(SeriesPlotter):
 
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
+        print(f"{self.title} frame: {int(self._data[frame_index, 0])}")
         WINDOW = 100
         visible_x = self._data[(frame_index - WINDOW):(frame_index + WINDOW + 1), 0]
         visible_y = self._data[(frame_index - WINDOW):(frame_index + WINDOW + 1), 1]
@@ -105,28 +106,14 @@ class PupillometryPlotter(SeriesPlotter):
             axes.axvline(self._data[frame_index, 0])
             axes.set_xlim(visible_x[0], visible_x[-1])
             axes.set_ylim(np.min(self._data[:, 1]), np.max(self._data[:, 1]))
-            # axes.set_xticklabels(np.array([int(i) for i in range(left_delta, right_delta)]))
-            # axes.set_xticklabels([i for i in range(WINDOW)])
-            # axes.set_xticks(WINDOW)
             axes.set_xticks(visible_x[::10])
             axes.set_xticklabels(x[::10])
         else:
             self._axes_data.set_data(self._data[:, 0], self._data[:, 1])
-            # axes.set_title(self.title)
             axes.draw_artist(self._axes_data)
             axes.axvline(self._data[frame_index, 0])
             axes.set_xlim(visible_x[0], visible_x[-1])
             axes.set_ylim(np.min(self._data[:, 1]), np.max(self._data[:, 1]))
-            # axes.set_xticklabels(visible_x)
-
-        print(f"pupillometry = {int(self._data[frame_index, 0])}")
-        # frame = self._data[frame_index, 0]
-        # left_x, right_x = frame - 200, frame + 200
-        # axes.clear()
-        # axes.set_title(self.title)
-        # axes.set_xlim(left_x, right_x)
-        # axes.plot(self._data[:, 0], self._data[:, 1])
-        # axes.axvline(self._data[frame_index, 0])
 
 
 class ImagePlotter(SeriesPlotter):
@@ -155,6 +142,7 @@ class ImagePlotter(SeriesPlotter):
 
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
+        print(f"{self.title} frame: {frame_index}")
         frame = self._image_series.get_frame(frame_index)
 
         if not started:
@@ -186,7 +174,7 @@ class VideoPlotter(SeriesPlotter):
 
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
-        print(f"video = {frame_index}")
+        print(f"{self.title} frame: {frame_index}")
         frame = self._image_series.get_frame(frame_index)
 
         if not started:
@@ -209,7 +197,18 @@ def _plotter_from_args(args: PlotterArgs) -> SeriesPlotter:
     elif isinstance(args, VideoPlotterArgs):
         return VideoPlotter(args)
     else:
-        return ValueError(f"Invalid arguments: {args}")
+        raise ValueError(f"Invalid arguments: {args}")
+
+
+def args_from_yaml(yaml_dict: Dict[str, Any]) -> PlotterArgs:
+    if yaml_dict["type"] == "video":
+        return VideoPlotterArgs(**yaml_dict["args"])
+    elif yaml_dict["type"] == "image":
+        return ImagePlotterArgs(**yaml_dict["args"])
+    elif yaml_dict["type"] == "pupillometry":
+        return PupillometryPlotterArgs(**yaml_dict["args"])
+    else:
+        raise ValueError(f"Invalid type: `{yaml_dict['type']}`")
 
 
 class PlotterCollection:

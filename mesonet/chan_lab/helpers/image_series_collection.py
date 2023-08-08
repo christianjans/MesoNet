@@ -3,7 +3,9 @@ from typing import Any, Dict, List
 
 import numpy as np
 
-from chan_lab.helpers.image_series import ImageSeries, ImageSeriesCreator
+from mesonet.chan_lab.helpers.image_series import (
+    ImageSeries, ImageSeriesCreator
+)
 
 
 @dataclasses.dataclass(frozen=True)

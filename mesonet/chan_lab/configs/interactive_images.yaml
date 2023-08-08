@@ -1,0 +1,3 @@
+image_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full3_1.5/atlas_brain/0.png"
+region_points_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full3_1.5_atlas_brain/dlc_output/region_points_0.pkl"
+save_file: null

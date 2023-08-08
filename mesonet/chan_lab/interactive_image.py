@@ -3,18 +3,18 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pickle
 
+from mesonet.chan_lab.helpers.utils import config_to_namespace
+
 
 class InteractiveImageManager:
-    def __init__(self, region_pixels_file: str, save_file: str = None):
+    def __init__(self, region_points_file: str, save_file: str = None):
         self.previous_region = -1
         self.custom_region_label = -1
         self.custom_region = {}
         self.save_file = save_file
 
-        with open(region_pixels_file, "rb") as f:
-            self.region_pixels = pickle.load(f)
-
-        print(self.region_pixels)
+        with open(region_points_file, "rb") as f:
+            self.region_points = pickle.load(f)
 
     def mouse_movement(self, event):
         x, y = event.xdata, event.ydata
@@ -25,8 +25,8 @@ class InteractiveImageManager:
             self.custom_region[point] = self.custom_region_label
             print(point)
 
-        if point in self.region_pixels:
-            current_region = self.region_pixels[point]
+        if point in self.region_points:
+            current_region = self.region_points[point]
         else:
             current_region = -1
 
@@ -49,8 +49,8 @@ class InteractiveImageManager:
                       "custom region")
 
 
-def main(args):
-    manager = InteractiveImageManager(args.region_pixels_file, args.save_file)
+def main(args: argparse.Namespace):
+    manager = InteractiveImageManager(args.region_points_file, args.save_file)
 
     def mouse_movement(event):
         manager.mouse_movement(event)
@@ -67,16 +67,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    """
-    python mesonet/interactive_image.py \
-        --image-file ./mesonet_outputs/pipeline_brain_atlas/output_overlay/0_overlay.png \
-        --region-pixels-file ./region_points.pkl
-    """
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image-file", type=str, required=True)
-    parser.add_argument("--region-pixels-file", type=str, required=True)
-    parser.add_argument("--save-file", type=str, default=None)
+    parser.add_argument("--config", type=str, required=True)
     args = parser.parse_args()
 
-    main(args)
+    config_args = config_to_namespace(args.config)
+
+    main(config_args)
