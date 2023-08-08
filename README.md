@@ -1,3 +1,17 @@
+# Instructions for Chan Lab members
+
+Welcome to the Chan Lab MesoNet repository! This repository is built off of the
+MesoNet repository. Included are some added scripts and functions for data
+analysis. All Chan Lab scripts can be found in the [mesonet/chan_lab/](/mesonet/chan_lab/) directory.
+
+To begin, start by [installing MesoNet](#installation). The recommended install
+is using the Anaconda (conda) environment to install DeepLabCut and the other
+requirements for MesoNet.
+
+Once installation is complete, MesoNet can be used with the scripts in the
+[mesonet/chan_lab/](/mesonet/chan_lab/) directory. See the
+[Chan Lab scripts](/docs/chan_lab_scripts.md) for more details.
+
 # MesoNet
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bf777/MesoNet/blob/master/mesonet_demo_colab.ipynb) [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/1919930/tree) [![DOI](https://zenodo.org/badge/197092510.svg)](https://zenodo.org/badge/latestdoi/197092510) [![CC BY 4.0][cc-by-shield]][cc-by]
@@ -32,7 +46,7 @@ as adapted in [zhixuhao](https://github.com/zhixuhao)'s [unet repository](https:
 [install and set up a DeepLabCut environment](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md).
 We recommend using their supplied Anaconda environments.
 2. Activate the DeepLabCut environment (as described above, usually `activate DEEPLABCUT` on Windows or 
-`source activate DEEPLABCUT` on Linux/Mac. 
+`conda activate DEEPLABCUT` on Linux/Mac. 
 3. Clone this git repository: `git clone https://github.com/bf777/MesoNet.git`
 * NOTE: If you are on Windows, please clone the repository to a location on `C://` as the git repository search function does not currently support other drives.
 5. Enter the git repository folder using `cd mesonet`, then run `python setup.py install` to install additional
