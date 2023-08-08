@@ -655,10 +655,9 @@ def applyMask(
                 orig_list.sort()
 
             # NOTE: Added by Christian.
-            if not os.path.exists("region_points.pkl"):
-                with open("region_points.pkl", "wb") as f:
-                    print("Saving region pixels")
-                    pickle.dump(region_points, f)
+            with open(f"region_points_{i}.pkl", "wb") as f:
+                print(f"Saving region points {i}")
+                pickle.dump(region_points, f)
 
             orig_list_labels_sorted_left = sorted(
                 orig_list_labels_left, key=lambda t: t[0], reverse=True
