@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
-from chan_lab.helpers.image_series import ImageSeriesCreator
-from utils import reorder_matrix
+from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
+from mesonet.utils import reorder_matrix
 
 REGION_POINTS_WIDTH_MAX = 512
 REGION_POINTS_HEIGHT_MAX = 512
