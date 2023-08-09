@@ -5,12 +5,21 @@ import pickle
 
 from mesonet.chan_lab.helpers.utils import config_to_namespace
 
+REGION_POINTS_WIDTH = 512
+REGION_POINTS_HEIGHT = 512
+
 
 class InteractiveImageManager:
-    def __init__(self, region_points_file: str, save_file: str = None):
+    def __init__(self,
+                 region_points_file: str,
+                 image_width: int,
+                 image_height: int,
+                 save_file: str = None):
         self.previous_region = -1
         self.custom_region_label = -1
         self.custom_region = {}
+        self.width_scale = REGION_POINTS_WIDTH / image_width
+        self.height_scale = REGION_POINTS_HEIGHT / image_height
         self.save_file = save_file
 
         with open(region_points_file, "rb") as f:
@@ -18,23 +27,22 @@ class InteractiveImageManager:
 
     def mouse_movement(self, event):
         x, y = event.xdata, event.ydata
-        point = (int(x), int(y))
+        point_expanded = (int(x * self.width_scale), int(y * self.height_scale))
 
         if event.button:
             self.was_clicked = True
-            self.custom_region[point] = self.custom_region_label
-            print(point)
+            self.custom_region[point_expanded] = self.custom_region_label
 
-        if point in self.region_points:
-            current_region = self.region_points[point]
+        if point_expanded in self.region_points:
+            current_region = self.region_points[point_expanded]
         else:
             current_region = -1
 
-        if current_region != self.previous_region:
-            if current_region >= 0:
-                print(f"In region {current_region}")
-            else:
-                print(f"Not in a region")
+        # if current_region != self.previous_region:
+        if current_region >= 0:
+            print(f"In region {current_region}")
+        else:
+            print(f"Not in a region")
 
         self.previous_region = current_region
 
@@ -50,7 +58,10 @@ class InteractiveImageManager:
 
 
 def main(args: argparse.Namespace):
-    manager = InteractiveImageManager(args.region_points_file, args.save_file)
+    manager = InteractiveImageManager(args.region_points_file,
+                                      args.image_width,
+                                      args.image_height,
+                                      args.save_file)
 
     def mouse_movement(event):
         manager.mouse_movement(event)
