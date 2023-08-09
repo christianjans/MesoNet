@@ -101,7 +101,7 @@ class PupillometryPlotter(SeriesPlotter):
         if not started:
             self._axes_data = axes.plot([])[0]
             axes.set_title(self.title)
-            axes.set_xlabel("asdf", fontdict={"size": 80})
+            axes.set_xlabel("Relative frame", fontdict={"size": 80})
             axes.tick_params(axis="both", labelsize=80)
             axes.axvline(self._data[frame_index, 0])
             axes.set_xlim(visible_x[0], visible_x[-1])
