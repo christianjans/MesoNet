@@ -3,7 +3,7 @@
 MesoNet segments the brain into different regions. The segmentation of the brain
 can be found in the `output_overlay/` directory of the MesoNet output directory.
 
-## The Allen Mouse Brain Common Coordinate Framework Regions
+# The Allen Mouse Brain Common Coordinate Framework Regions
 
 The regions are based on the paper, "The Allen Mouse Brain Common Coordinate
 Framework: A 3D Reference Atlas" by Wang et al. in 2020.
