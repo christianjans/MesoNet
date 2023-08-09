@@ -1,3 +1,22 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/sensory_map.py --config mesonet/chan_lab/configs/sensory_map.yaml
+#
+# Arguments
+# =========
+# - mesoscale_file: The processed mesoscale images (either .raw or .mat).
+# - region_points_file: The region points file containing the MesoNet segmented
+#   regions for this mouse.
+# - save_dir: The directory in which to save the sensory map image.
+# - event_frame: The frame at which the event (e.g. a light flash) begins.
+# - fps: The frame rate of the image series.
+# - scope: The time in seconds after the event frame from which to pick the
+#   maximum value of each pixel.
+#
+# Outputs
+# =======
+# The sensory map image.
+
 mesoscale_file: "/Users/christian/Documents/summer2023/matlab/my_data/isoflurane1_mouse6_eye-r/imMean.mat"
 region_points_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/isoflurane1_mouse6_eye-r_atlas_brain/dlc_output/region_points.pkl"
 save_dir: "/Users/christian/Documents/summer2023/MesoNet/data/isoflurane1_mouse6_eye-r"
