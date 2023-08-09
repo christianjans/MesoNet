@@ -40,8 +40,9 @@ Specifically, MesoNet contains the following regions:
 | 19            | MOp                | Primary motor area                         |
 
 The names for the regions were obtained from the spreadsheet found in the
-supplementary resources of the paper. The spreadsheet can also be found in this
-repository located [in the documentation](/docs/_static/mmc2.xlsx).
+supplementary resources of the paper
+(https://www.sciencedirect.com/science/article/pii/S0092867420304025#app2). The spreadsheet can also be found in this repository located
+[in the documentation](/docs/_static/mmc2.xlsx).
 
 Note that the complementary region numbers for each region in the left
 hemisphere are 40 subtract the right hemisphere's region number. So, for
