@@ -1,41 +1,51 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/event_analyzer_app.py --config mesonet/chan_lab/configs/event_analyzer_app.yaml
+#
+# Arguments
+# =========
+# - plots: A list of dictionaries. Each item in the list corresponds to a
+#   separate plot in the app. TODO: Explain more.
+# - plot_rows: The number of rows to use to plot the data in the app.
+#
+# Outputs
+# =======
+# None
+
 plots:
 - {
   type: "video",
   args: {
-    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102833-0000.avi",
-    fps: 30.0003,
-    offset: 0,
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full4/fc2_save_2023-08-08-111558-0000.avi",
+    event_frames: [205, 3805, 7405, 11005, 14605, 18206, 21806, 25406],
     title: "Pupil"
   }
 }
 - {
   type: "video",
   args: {
-    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full2/fc2_save_2023-07-31-102834-0000.avi",
-    fps: 30.0003,
-    offset: 26,
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full4/fc2_save_2023-08-08-111557-0000.avi",
+    event_frames: [234, 3837, 7441, 11044, 14648, 18251, 21855, 25458],
     title: "Body"
   }
 }
 - {
   type: "image",
   args: {
-    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full2/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-27478.raw",
-    fps: 29.98,
-    offset: 363,
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full4/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-28000.raw",
+    event_frames: [160, 3755, 7351, 10946, 14541, 18137, 21732, 25327],
     title: "Mesoscale",
     image_width: 128,
     image_height: 128,
     kwargs: {},
-    region_points: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full2_atlas_brain/dlc_output/region_points_2.pkl"
+    region_points: null
   }
 }
 - {
   type: "pupillometry",
   args: {
-    filename: "/Users/christian/Documents/summer2023/pupillometry_matlab/example_full2/clean.mat",
-    fps: 15.00015,
-    offset: 2,
+    filename: "/Users/christian/Documents/summer2023/pupillometry_matlab/example_full4/fc2_save_2023-08-08-111558-0000_radii.mat",
+    event_frames: [205, 3805, 7405, 11005, 14605, 18206, 21806, 25406],
     title: "Pupillometry"
   }
 }

@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Dict, Iterable, Tuple, Union
+from typing import Any, Dict, Iterable
 
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -8,15 +8,15 @@ from matplotlib.axes import Axes
 import numpy as np
 import scipy
 
-from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
 from mesonet.chan_lab.activity_analyzer import MasksManager
+from mesonet.chan_lab.helpers.event_frames import EventFrames
+from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
 
 
 @dataclasses.dataclass(frozen=True)
 class PlotterArgs:
     filename: str
-    fps: float
-    offset: int
+    event_frames: Iterable[int]
     title: str
 
     def __new__(cls, *args, **kwargs):
@@ -44,10 +44,9 @@ class VideoPlotterArgs(PlotterArgs):
 
 
 class SeriesPlotter:
-    def __init__(self, filename: str, fps: float, offset: int, title: str):
+    def __init__(self, filename: str, event_frames: Iterable[int], title: str):
         self._filename = filename
-        self._fps = fps
-        self._offset = offset
+        self._event_frames = EventFrames(event_frames)
         self._title = title
 
     @property
@@ -55,12 +54,8 @@ class SeriesPlotter:
         return self._filename
 
     @property
-    def fps(self) -> float:
-        return self._fps
-
-    @property
-    def offset(self) -> int:
-        return self._offset
+    def event_frames(self) -> EventFrames:
+        return self._event_frames
 
     @property
     def title(self) -> str:
@@ -70,6 +65,13 @@ class SeriesPlotter:
     def n_frames(self) -> int:
         raise NotImplementedError
 
+    def frames(self,
+               frame_index: int,
+               left: int = 0,
+               right: int = 0,
+               every: int = 1):
+        raise NotImplementedError
+
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
         raise NotImplementedError
@@ -77,7 +79,7 @@ class SeriesPlotter:
 
 class PupillometryPlotter(SeriesPlotter):
     def __init__(self, args: PupillometryPlotterArgs):
-        super().__init__(args.filename, args.fps, args.offset, args.title)
+        super().__init__(args.filename, args.event_frames, args.title)
         self._data = scipy.io.loadmat(self.filename)["R"]
         self._axes_data = None
 
@@ -87,6 +89,8 @@ class PupillometryPlotter(SeriesPlotter):
 
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
+        # TODO
+        frame_index = frame_index // 2
         print(f"{self.title} frame: {int(self._data[frame_index, 0])}")
         WINDOW = 100
         visible_x = self._data[(frame_index - WINDOW):(frame_index + WINDOW + 1), 0]
@@ -118,7 +122,7 @@ class PupillometryPlotter(SeriesPlotter):
 
 class ImagePlotter(SeriesPlotter):
     def __init__(self, args: ImagePlotterArgs):
-        super().__init__(args.filename, args.fps, args.offset, args.title)
+        super().__init__(args.filename, args.event_frames, args.title)
         self._image_series = \
                 ImageSeriesCreator.create_cached_image_series(self.filename,
                                                               args.image_width,
@@ -163,7 +167,7 @@ class ImagePlotter(SeriesPlotter):
 
 class VideoPlotter(SeriesPlotter):
     def __init__(self, args: VideoPlotterArgs):
-        super().__init__(args.filename, args.fps, args.offset, args.title)
+        super().__init__(args.filename, args.event_frames, args.title)
         self._image_series = \
                 ImageSeriesCreator.create_uncached_image_series(args.filename)
         self._axes_image = None
@@ -236,17 +240,10 @@ class PlotterCollection:
         ]
         self._plotters = [_plotter_from_args(args) for args in plotter_args]
 
-        self._reference_offset = self._plotters[0].offset
-        self._reference_fps = self._plotters[0].fps
-        all_offsets = [plotter.offset for plotter in self._plotters]
-        all_max_frames = [
-            offset + plotter.n_frames - 1
-            for offset, plotter in zip(all_offsets, self._plotters)
-        ]
-        assert self._reference_offset <= min(all_offsets)
+        self._reference_event_frames = self._plotters[0].event_frames
 
-        self._min_frame_index = int(max(all_offsets))
-        self._max_frame_index = int(min(all_max_frames))
+        self._min_frame_index = self._reference_event_frames.min
+        self._max_frame_index = self._reference_event_frames.max
 
         # Used for blitting.
         self._started = False
@@ -268,9 +265,8 @@ class PlotterCollection:
 
         if not self._started:
             for axes, plotter in zip(self._plots, self._plotters):
-                relative_frame_index = self._relative_frame_index(frame_index,
-                                                                plotter.offset,
-                                                                plotter.fps)
+                relative_frame_index = self._relative_frame_index(
+                        frame_index, plotter.event_frames)
                 plotter.update(relative_frame_index,
                                self._figure,
                                axes,
@@ -286,9 +282,8 @@ class PlotterCollection:
                 self._canvas.restore_region(background)
 
             for axes, plotter in zip(self._plots, self._plotters):
-                relative_frame_index = self._relative_frame_index(frame_index,
-                                                                plotter.offset,
-                                                                plotter.fps)
+                relative_frame_index = self._relative_frame_index(
+                        frame_index, plotter.event_frames)
                 plotter.update(relative_frame_index,
                                self._figure,
                                axes,
@@ -301,8 +296,10 @@ class PlotterCollection:
 
     def _relative_frame_index(self,
                               frame_index: int,
-                              offset: int,
-                              fps: float) -> int:
+                              event_frames: EventFrames) -> int:
+        return event_frames.equivalent_frame(
+                frame_index, self._reference_event_frames)
+
         reference_time = self._reference_offset / self._reference_fps
         frame_time = frame_index / self._reference_fps
         start_time = offset / self._reference_fps
