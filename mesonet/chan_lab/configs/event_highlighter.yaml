@@ -1,0 +1,111 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/event_highlighter.py --config mesonet/chan_lab/configs/event_highlighter.py
+#
+# Arguments
+# =========
+# - pupil: The YAML object definition of the pupil (face) video. See the
+#   docs/yaml_to_py.md file for more information.
+# - body: The YAML object definition of the body video. See the
+#   docs/yaml_to_py.md file for more information.
+# - mesoscale: THe YAML object definition of the series of processed mesoscale
+#   images. See the docs/yaml_to_py.md file for more information.
+# - pupillometry: The YAML object definition of the series of pupillometry data
+#   points. See the docs/yaml_to_py.md file for more information.
+# - frames_of_interest: Data around each frame of interest will be shown. The
+#   frames are relative to the frame numbers of the pupil (face) video.
+# - frames_left: The number of frames to show before the frame of interest.
+# - frames_right: The number of frames to show after the frame of interest.
+# - skip_every: How many frames to skip in the left and right frames.
+#
+# Outputs
+# =======
+# None
+
+# full4 dataset
+# pupil: {
+#   type: "video",
+#   args: {
+#     filename: "/Users/christian/Documents/summer2023/matlab/my_data/full4/fc2_save_2023-08-08-111558-0000.avi",
+#     event_frames: [205, 3805, 7405, 11005, 14605, 18206, 21806, 25406],
+#     title: "Pupil"
+#   }
+# }
+# body: {
+#   type: "video",
+#   args: {
+#     filename: "/Users/christian/Documents/summer2023/matlab/my_data/full4/fc2_save_2023-08-08-111557-0000.avi",
+#     event_frames: [234, 3837, 7441, 11044, 14648, 18251, 21855, 25458],
+#     title: "Body"
+#   }
+# }
+# mesoscale: {
+#   type: "image",
+#   args: {
+#     filename: "/Users/christian/Documents/summer2023/matlab/my_data/full4/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-28000.raw",
+#     event_frames: [160, 3755, 7351, 10946, 14541, 18137, 21732, 25327],
+#     title: "Mesoscale",
+#     image_width: 128,
+#     image_height: 128,
+#     kwargs: {},
+#     region_points: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full4_atlas_brain/dlc_output/region_points_7.pkl"
+#   }
+# }
+# pupillometry: {
+#   type: "pupillometry",
+#   args: {
+#     filename: "/Users/christian/Documents/summer2023/pupillometry_matlab/example_full4/clean.mat",
+#     event_frames: [205, 3805, 7405, 11005, 14605, 18206, 21806, 25406],
+#     title: "Pupillometry"
+#   }
+# }
+# # frames_of_interest: [12242, 4666, 11442, 9204, 22590, 12396, 8374, 12666, 9908, 9862]  # Peaks
+# frames_of_interest: [11924, 10698, 8822, 22090, 12274, 6334, 12428, 9680, 7546]  # Troughs
+# frames_left: 10
+# frames_right: 10
+# skip_every: 3
+
+# full5 dataset
+pupil: {
+  type: "video",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full5/fc2_save_2023-08-09-103031-0000.avi",
+    event_frames: [272, 3872, 7472, 11072, 14672, 18272, 21872, 25472],
+    title: "Pupil"
+  }
+}
+body: {
+  type: "video",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full5/fc2_save_2023-08-09-103033-0000.avi",
+    event_frames: [225, 3828, 7432, 11035, 14639, 18242, 21846, 25449],
+    title: "Body"
+  }
+}
+mesoscale: {
+  type: "image",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/matlab/my_data/full5/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-28000.raw",
+    event_frames: [156, 3751, 7346, 10942, 14537, 18132, 21728, 25323],
+    title: "Mesoscale",
+    image_width: 128,
+    image_height: 128,
+    kwargs: {},
+    region_points: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full5_atlas_brain/dlc_output/region_points_3.pkl"
+  }
+}
+pupillometry: {
+  type: "pupillometry",
+  args: {
+    filename: "/Users/christian/Documents/summer2023/pupillometry_matlab/example_full5/clean.mat",
+    event_frames: [272, 3872, 7472, 11072, 14672, 18272, 21872, 25472],
+    title: "Pupillometry"
+  }
+}
+# frames_of_interest: [13498, 18422, 3292, 10796, 15392, 19206, 21040, 19638, 4043]  # Peaks
+frames_of_interest: [13498, 10796, 19206, 21040]  # Peaks
+# frames_of_interest: [17640, 9920, 11752, 13820, 20762, 18900, 25024, 19496, 3266]  # Troughs
+# frames_of_interest: [272, 3872, 7472, 11072, 14672, 18272, 21872]  # Flashes
+frames_left: 10
+frames_right: 10
+skip_every: 2

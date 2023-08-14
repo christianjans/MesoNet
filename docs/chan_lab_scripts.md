@@ -145,3 +145,13 @@ respectively. Note that upon startup, the user must tap the right arrow key a
 couple times for the images to show initially.
 
 <img src="/docs/_static/event_analyzer_app.png" alt="sensory map image" width="1024"/>
+
+## [`event_highlighter.py`](/mesonet/chan_lab/event_highlighter.py)
+
+This script displays plots of the pupil (face) video, body video, mesoscale
+image series, and pupillometry timecourse data around frames of interest. See
+the [event_highlighter.yaml](/mesonet/chan_lab/configs/event_highlighter.yaml)
+configuration file for an example configuration and more detaisl about what goes
+into a configuration.
+
+<img src="/docs/_static/event_highlighter.png" alt="event highlighter image" width="1024>
