@@ -78,9 +78,9 @@ described in more detail below.
 The `dlc_output/` directory contains the output of the DeepLabCut inference
 which creates the segmentation of the brain image. The file,
 `region_points_<num>.pkl` is a serialized Python dictionary describing the
-regions of the MesoNet segmentation. The dictionary keys are a tuple of two
-integers which represents the x, y coordinate of a pixel in a 512x512 version
-of the brain image. The value is the MesoNet region number.
+regions of the MesoNet segmentation of the `<num>`th image. The dictionary keys
+are a tuple of two integers which represents the x, y coordinate of a pixel in a
+512x512 version of the brain image. The value is the MesoNet region number.
 
 To examine a region points file, load it in Python:
 
