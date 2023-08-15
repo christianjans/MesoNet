@@ -25,7 +25,7 @@ def _plot_pupil(
         data: np.ndarray, left: int, every: int, frames_of_interest: List[int]):
     rows = data.shape[0]
     columns = data.shape[1]
-    figure = plt.figure()
+    figure = plt.figure(num="Pupil frames relative to event")
 
     for i in range(rows):
         for j in range(columns):
@@ -44,7 +44,7 @@ def _plot_body(
         data: np.ndarray, left: int, every: int, frames_of_interest: List[int]):
     rows = data.shape[0]
     columns = data.shape[1]
-    figure = plt.figure()
+    figure = plt.figure(num="Body frames relative to event")
 
     for i in range(rows):
         for j in range(columns):
@@ -72,9 +72,9 @@ def _plot_mesoscale(
     """
     rows = data.shape[0]
     columns = data.shape[1]
-    # figure, axes = plt.subplots(rows, columns, sharex=True)
-    figure = plt.figure()
-    figure_aggregated = plt.figure()
+    figure = plt.figure(num="Mesoscale frames relative to event")
+    figure_aggregated = plt.figure(
+            num="Averaged mesoscale frames relative to event")
 
     for i in range(rows):
         for j in range(columns):
@@ -84,9 +84,6 @@ def _plot_mesoscale(
             axes.set_axis_off()
             axes.set_title(title)
             axes.imshow(data[i][j], vmin=-1.0, vmax=1.0)
-            # axes[i, j].set_axis_off()
-            # axes[i, j].set_title(title)
-            # axes[i, j].imshow(data[i][j])
 
     mean_data = np.mean(data, axis=0)
     for i, mean_image in enumerate(mean_data):
@@ -114,11 +111,10 @@ def _plot_pupillometry(
 
     where 2 represents the x and y coordinates.
     """
-    print(data.shape)
     columns = data.shape[0]
     points = data.shape[-1]
-    figure_individuals = plt.figure()
-    figure_aggregated = plt.figure()
+    figure = plt.figure(num="Pupil size relative to event")
+    figure_aggregated = plt.figure(num="Averaged pupil size relative to event")
 
     x_data = data[:, 0, :]
     y_data = data[:, 1, :]
@@ -126,14 +122,18 @@ def _plot_pupillometry(
     x_ticks = [every * (i * delta_x - left) for i in range(points)]
 
     for i, (y, frame_of_interest) in enumerate(zip(y_data, frames_of_interest)):
-        axes = figure_individuals.add_subplot(1, columns, i + 1)
+        axes = figure.add_subplot(1, columns, i + 1)
         axes.plot(x_ticks, y)
-        axes.set_title(f"{frame_of_interest}")
+        axes.set_xlabel("Relative frame")
+        axes.set_ylabel("Radius (pixels)")
+        axes.set_title(f"Event frame: {frame_of_interest}")
 
     mean = np.mean(y_data, axis=0)
     std = np.std(y_data, axis=0)
     axes = figure_aggregated.add_subplot()
     axes.plot(x_ticks, mean)
+    axes.set_xlabel("Relative frame")
+    axes.set_ylabel("Radius (pixels)")
     axes.fill_between(x_ticks, mean - std, mean + std, alpha=0.3)
 
 
