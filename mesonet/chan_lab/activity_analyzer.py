@@ -11,6 +11,7 @@ import numpy as np
 import scipy
 
 from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
+from mesonet.chan_lab.helpers.utils import config_to_namespace
 from mesonet.utils import reorder_matrix
 
 REGION_POINTS_WIDTH_MAX = 512
@@ -441,6 +442,21 @@ def fft(args):
 
 
 def activity_complements(args):
+    """
+    Uses:
+    - save_dir
+    - region_points_file
+    - image_width
+    - image_height
+    - use_com
+    - square_com
+    - image_file
+    - n_frames
+    - highlights
+    - mat_property
+    - mat_transpose_axes
+    - still_image_file
+    """
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
@@ -450,13 +466,8 @@ def activity_complements(args):
                                  use_center_of_mass=args.use_com,
                                  square_center_of_mass_points=args.square_com)
     image_series = ImageSeriesCreator.create_cached_image_series(
-            args.image_file, args.image_width, args.image_height, args.n_frames)
-    # image_series = ImageSeriesCreator.create(args.image_file,
-    #                                          args.image_width,
-    #                                          args.image_height,
-    #                                          args.n_frames,
-    #                                          property=args.mat_property,
-    #                                          transpose_axes=args.mat_transpose_axes)
+            args.image_file, args.image_width, args.image_height, args.n_frames,
+            property=args.mat_property, transpose_axes=args.mat_transpose_axes)
 
     # Save masks on images if a still image is provided.
     if args.still_image_file:
@@ -490,7 +501,7 @@ def activity_complements(args):
         plt.savefig(os.path.join(args.save_dir, "masks.png"), dpi=200)
     plt.clf()
 
-    data = np.zeros((len(masks_manager.masks), args.n_frames))
+    data = np.zeros((len(masks_manager.masks), image_series.n_frames))
 
     # Record the time series activity data for each region that has a
     # complement.
@@ -510,6 +521,8 @@ def activity_complements(args):
     all_correlations_masked = all_correlations * np.tri(len(masks_manager.masks)) * (1 - np.eye(len(masks_manager.masks)))
 
     np.save(os.path.join(args.save_dir, "timecourse.npy"), data)
+    scipy.io.savemat(os.path.join(args.save_dir, "timecourse.mat"),
+                     {"data": data})
 
     # Plot the complement regions.
     for i in range(len(masks_manager.masks) // 2):
@@ -523,7 +536,9 @@ def activity_complements(args):
         plot_filename = f"complement_{label}-{complement_label}_r{correlation:.3f}.png"
         print(f"complement correlation: {label}-{complement_label} {correlation}")
 
-        plt.title(f"{label} - {complement_label} activity")
+        plt.title(f"{label} - {complement_label} activity, r = {correlation:.3f}")
+        plt.xlabel("Frame")
+        plt.ylabel("Average region intensity")
         plt.plot(data[label], label=label)
         plt.plot(data[complement_label], label=complement_label)
         plt.legend()
@@ -534,6 +549,8 @@ def activity_complements(args):
     for highlight in args.highlights:
         plot_filename = f"activity_{highlight}.png"
         plt.title(f"{highlight} activity")
+        plt.xlabel("Frame")
+        plt.ylabel("Average region intensity")
         plt.plot(data[highlight], label=highlight)
         plt.legend()
         plt.savefig(os.path.join(args.save_dir, plot_filename))
@@ -571,7 +588,9 @@ def activity_complements(args):
             continue
         print(f"correlation correlation: {r1}-{r2} {correlation}")
         plot_filename = f"correlation_{r1}-{r2}_r{correlation:.3f}.png"
-        plt.title(f"{r1} - {r2} activity")
+        plt.title(f"{r1} - {r2} activity, r = {correlation:.3f}")
+        plt.xlabel("Frame")
+        plt.ylabel("Average region intensity")
         plt.plot(data[r1], label=r1)
         plt.plot(data[r2], label=r2)
         plt.legend()
@@ -612,6 +631,17 @@ def activity(args):
 
 
 def seed_pixel_map(args):
+    """
+    Uses:
+    - save_dir
+    - region_points_file
+    - still_image_file
+    - image_width
+    - image_height
+    - n_frames
+    - mat_property
+    - mat_transpose_axes
+    """
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
@@ -620,33 +650,35 @@ def seed_pixel_map(args):
         region_points = pickle.load(f)
     region_points = transform_region_points(region_points)
 
-    # BACKGROUND_IMAGE = "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/awake1_data/atlas_brain/0.png"
-    BACKGROUND_IMAGE = "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/awake2_data/atlas_brain/0.png"
-    assert False, "Did you check that the above image path is correct?"
-    background_image = cv2.imread(BACKGROUND_IMAGE, cv2.IMREAD_GRAYSCALE)
+    background_image = cv2.imread(args.still_image_file, cv2.IMREAD_GRAYSCALE)
 
     image_series = ImageSeriesCreator.create_cached_image_series(
-            args.image_file, args.image_width, args.image_height, args.n_frames)
+            args.image_file, args.image_width, args.image_height, args.n_frames,
+            property=args.mat_property, transpose_axes=args.mat_transpose_axes)
 
-    data = np.zeros((args.n_frames,
+    data = np.zeros((image_series.n_frames,
                      args.image_height,
                      args.image_width), dtype=np.float64)
 
     for i, image in enumerate(image_series):
         data[i] = image
 
-    data = np.transpose(np.reshape(data, (args.n_frames, -1)))
+    data = np.transpose(np.reshape(data, (image_series.n_frames, -1)))
     correlation = np.corrcoef(data)
 
-    np.save(os.path.join(args.save_dir, "correlation.npy"), correlation)
+    np.save(os.path.join(args.save_dir, "corrmat.npy"), correlation)
+    scipy.io.savemat(os.path.join(args.save_dir, "corrmat.mat"),
+                     {"data": correlation})
+    x_scale = args.image_width / 512
+    y_scale = args.image_height / 512
 
     figure, axes = plt.subplots(nrows=1, ncols=len(region_points))
     figure.set_size_inches(2 * len(region_points), 4)
     figure.subplots_adjust(wspace=0.5)
     for i, (x, y) in enumerate(region_points):
-        new_x, new_y = x // 4, y // 4
-        map = correlation[new_y * 128 + new_x, :]
-        map = np.reshape(map, (128, 128))
+        new_x, new_y = int(x * x_scale), int(y * y_scale)
+        map = correlation[new_y * args.image_width + new_x, :]
+        map = np.reshape(map, (args.image_height, args.image_width))
         dot = patches.Circle((new_x, new_y), 1, edgecolor="black")
         axes[i].imshow(background_image)
         axes[i].imshow(map, alpha=0.7)
@@ -738,6 +770,7 @@ def correlation_matrix_comparison():
             plot_title = f"{correlation_tags[minuend]} - {correlation_tags[subtrahend]}"
             plt.matshow(difference_matrix, vmin=-1.0, vmax=1.0)
             plt.title(plot_title)
+            plt.xlabel("Region number")
             plt.xticks(range(n_regions), labels=plot_labels, rotation=45)
             plt.yticks(range(n_regions), labels=plot_labels)
             plt.tick_params(axis="x", labelbottom=True)
@@ -823,7 +856,9 @@ def _plot_correlation_matrix(
     save_dir: str,
 ) -> np.array:
     # Save the original correlation matrix.
-    np.save(os.path.join(save_dir, "correlation.npy"), correlation_matrix)
+    np.save(os.path.join(save_dir, "corrmat.npy"), correlation_matrix)
+    scipy.io.savemat(os.path.join(save_dir, "corrmat.mat"),
+                     {"data": correlation_matrix})
 
     # Obtain all possible regions in sorted order.
     sorted_regions = sorted(set(region_points.values()))
@@ -847,78 +882,73 @@ def _plot_correlation_matrix(
     # Save the full correlation matrix.
     plt.rcParams.update({"font.size": 6})
     plt.matshow(full_correlation_matrix)
+    plt.xlabel("Region number")
     plt.xticks(range(len(sorted_regions)), labels=matrix_labels, rotation=45)
     plt.yticks(range(len(sorted_regions)), labels=matrix_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
-    plt.savefig(os.path.join(save_dir, "correlation.png"), dpi=200)
+    plt.savefig(os.path.join(save_dir, "corrmat.png"), dpi=200)
     plt.clf()
 
     # Save the full correlation matrix with upper right masked.
     masked_correlation_matrix = full_correlation_matrix * np.tri(len(sorted_regions)) * (1 - np.eye(len(sorted_regions)))
     plt.rcParams.update({"font.size": 6})
     plt.matshow(masked_correlation_matrix)
+    plt.xlabel("Region number")
     plt.xticks(range(len(sorted_regions)), labels=matrix_labels, rotation=45)
     plt.yticks(range(len(sorted_regions)), labels=matrix_labels)
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
-    plt.savefig(os.path.join(save_dir, "correlation_masked.png"), dpi=200)
+    plt.savefig(os.path.join(save_dir, "corrmat_masked.png"), dpi=200)
     plt.clf()
 
     # Save the full correlation matrix with higher values near the diagonal.
     reordered_matrix, new_order = reorder_matrix(full_correlation_matrix)
     plt.rcParams.update({"font.size": 6})
     plt.matshow(reordered_matrix)
+    plt.xlabel("Region number")
     plt.xticks(range(len(sorted_regions)), labels=matrix_labels[new_order], rotation=45)
     plt.yticks(range(len(sorted_regions)), labels=matrix_labels[new_order])
     plt.tick_params(axis="x", labelbottom=True)
     plt.colorbar()
-    plt.savefig(os.path.join(save_dir, "correlation_reordered.png"), dpi=200)
+    plt.savefig(os.path.join(save_dir, "corrmat_reordered.png"), dpi=200)
     plt.clf()
 
     # TODO: Save the full correlation matrix with order same as the paper.
 
 
 if __name__ == "__main__":
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--region-points-file", type=str, required=True)
+    # parser.add_argument("--image-file", type=str, required=True)
+    # parser.add_argument("--still-image-file", type=str)
+    # parser.add_argument("--image-width", type=int, default=128)
+    # parser.add_argument("--image-height", type=int, default=128)
+    # parser.add_argument("--mat-property", type=str, default=None)
+    # parser.add_argument("--mat-transpose-axes", type=int, nargs="+", default=None)
+    # parser.add_argument("--save-dir", type=str, required=True)
+    # parser.add_argument("--n-frames", type=int, default=2000)
+    # parser.add_argument("--use-com", action='store_true')
+    # parser.add_argument("--square-com", action='store_true')
+    # parser.add_argument("--highlights", type=int, nargs="+", default=[])
+    # args = parser.parse_args()
+
+    # # fft(args)
+    # activity_complements(args)
+    # # activity(args)
+    # # seed_pixel_map(args)
+    # # correlation_matrix_comparison()
+    # # region_stds()
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--region-points-file", type=str, required=True)
-    parser.add_argument("--image-file", type=str, required=True)
-    parser.add_argument("--still-image-file", type=str)
-    parser.add_argument("--image-width", type=int, default=128)
-    parser.add_argument("--image-height", type=int, default=128)
-    parser.add_argument("--mat-property", type=str, default=None)
-    parser.add_argument("--mat-transpose-axes", type=int, nargs="+", default=None)
-    parser.add_argument("--save-dir", type=str, required=True)
-    parser.add_argument("--n-frames", type=int, default=2000)
-    parser.add_argument("--use-com", action='store_true')
-    parser.add_argument("--square-com", action='store_true')
-    parser.add_argument("--highlights", type=int, nargs="+", default=[])
+    parser.add_argument("--config", type=str, required=True)
     args = parser.parse_args()
 
-    # fft(args)
-    activity_complements(args)
-    # activity(args)
-    # seed_pixel_map(args)
-    # correlation_matrix_comparison()
-    # region_stds()
+    config_args = config_to_namespace(args.config)
 
-
-
-    # a1r = np.load('/Users/christian/Documents/summer2023/MesoNet/data/awake1_regions_preprocessed_0.1-1Hz/correlation.npy')
-    # a1c = np.load('/Users/christian/Documents/summer2023/MesoNet/data/awake1_com_preprocessed_0.1-1Hz/correlation.npy')
-
-    # a2r = np.load('/Users/christian/Documents/summer2023/MesoNet/data/awake2_regions_preprocessed_0.1-1Hz/correlation.npy')
-    # a2c = np.load('/Users/christian/Documents/summer2023/MesoNet/data/awake2_com_preprocessed_0.1-1Hz/correlation.npy')
-
-    # # m = a1r - a1c
-    # # m = a1c - a1r
-    # # m = a2r - a2c
-    # m = a2c - a2r
-    # plt.rcParams.update({"font.size": 6})
-    # plt.matshow(m)
-    # plt.xticks(range(m.shape[0]), labels=range(m.shape[0]), rotation=45)
-    # plt.yticks(range(m.shape[0]), labels=range(m.shape[0]))
-    # plt.tick_params(axis="x", labelbottom=True)
-    # plt.colorbar()
-    # plt.savefig(os.path.join("./data", "a2cpp-a2rpp.png"), dpi=200)
-    # plt.clf()
+    if config_args.function == "activity":
+        activity_complements(config_args)
+    elif config_args.function == "seed_pixel_map":
+        seed_pixel_map(config_args)
+    else:
+        raise ValueError(f"Unsupported function: `{config_args.function}`")

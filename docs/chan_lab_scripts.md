@@ -147,7 +147,22 @@ couple times for the images to show initially.
 This script displays plots of the pupil (face) video, body video, mesoscale
 image series, and pupillometry timecourse data around frames of interest. See
 the [event_highlighter.yaml](/mesonet/chan_lab/configs/event_highlighter.yaml)
-configuration file for an example configuration and more detaisl about what goes
+configuration file for an example configuration and more details about what goes
 into a configuration.
 
 <img src="/docs/_static/event_highlighter.png" alt="event highlighter image" width="1024>
+
+## [`activity_analyzer.py`](/mesonet/chan_lab/activity_analyzer.py)
+
+This script creates the timecourses of activity and correlation matrices for the
+different segmented regions. Additionally, it can create a seed pixel map around
+specific points of the retrosplenial and secondary motor cortices. See the
+[actvity_analyzer.yaml](/mesonet/chan_lab/configs/activity_analyzer.yaml)
+configuration file for an example configuration and more details about what goes
+into a configuration.
+
+<img src="/docs/_static/activity_timecourse.png" alt="activity timecourse image" width="1024">
+
+<img src="/docs/_static/correlation_matrix.png" alt="correlation matrix image" width="1024">
+
+<img src="/docs/_static/seed_pixel_map.png" alt="seed pixel map image" width="1024">

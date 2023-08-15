@@ -1,0 +1,85 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/activity_analyzer.py --config mesonet/chan_lab/configs/activity_analyzer.yaml
+#
+# Arguments
+# =========
+# - function: Either "activity" or "seed_pixel_map". This determines the output
+#   of the program.
+# - region_points_file: The region points file of the MesoNet segmentation for
+#   the dataset to be examined.
+# - image_file: The processed mesoscale image series file.
+# - still_image_file: A still image, usually taken from the output of the
+#   mesonet/chan_lab/image_selector.py script and used for display purposes as a
+#   background image.
+# - image_width: The width of the images.
+# - image_height: The height of the images.
+# - mat_property: Usually set to `null`. Used only if the image_file is a .mat
+#   file which contains a MATLAB structure. The mat_property is used to
+#   reference the field of interest in that structure.
+# - mat_transpose_axes: Usually set to `null`. Used only if the image_file is a
+#   .mat file which contains a MATLAB structure. The mat_tranpose_axes is used
+#   to transpose the axes of the matrix contained in the field of interest in
+#   the structure since MATLAB and NumPy axes are, by default, oriented
+#   differently.
+# - save_dir: The directory to save the output data.
+# - n_frames: The number of frames to analyze. The value must either be an
+#   integer greater than 0, or the string "all". Using "all" performs the
+#   analysis on all of the frames.
+# - use_com: Stands for "use center of mass". Setting this to `true` will use
+#   the center of mass of each segmented region as the ROI instead of the
+#   MesoNet-generated ROI. Not used when function is "seed_pixel_map".
+# - square_com: Stands for "square center of mass". This can only be used if
+#   use_com is set to `true`. This will make the ROI of each region a 10x10
+#   pixel region around the center of mass. Not used when function is
+#   "seed_pixel_map".
+# - highlights: A list of region numbers (i.e. in the range 0-40). Allows the
+#   user to explicitly list the region numbers that should be analyzed and
+#   plotted. Not used when function is "seed_pixel_map".
+#
+# Outputs
+# =======
+# function: "activity"
+#   When using the "activity" function, the save directory will contain plots
+#   regarding the activity in each region. Three types of plots will be created:
+#   1. Those that begin with "complement" contain the timecourse of activity of
+#      one region as well as its complement plotted on the same graph.
+#   2. Those that begin with "correlation" contain the timecourse of activity of
+#      two regions that have a relatively high correlation coefficient
+#      (r > 0.8).
+#   3. Those that begin with "activity" contain the timecourse of activity of
+#      one region.
+#   Note that each plot with multiple timecourses in the plot, at the end of its
+#   filename, has the correlation coefficient appended to it.
+#   The save directory will also contain the correlation matrices plots of the
+#   different regions. The file, corrmat.png is the raw correlation matrix, the
+#   file corrmat_reordered.png is the reordered correlation matrix to show the
+#   larger correlation values closer to the diagonal, and the corrmat_masked.png
+#   is the lower triangular correlation matrix.
+#   Finally, all the data for the timecourses as well as the correlation
+#   matrices are saved as NumPy array files (timecourse.npy and corrmat.npy,
+#   respectively). The file, timecourse.npy, has the region numbers as rows
+#   and the activity in each region for each frame as columns. The file,
+#   corrmat.npy, is the raw correlation matrix, including NaN values. The same
+#   date is included in the timecourse.mat and corrmat.mat files, each within
+#   "data" struct field.
+# function: "seed_pixel_map"
+#   When using the "seed_pixel_map" function, a plot of the seed pixel map will
+#   be shown. The plot shows two black points in each of the retrosplenial and
+#   secondary motor regions. One point is in the upper half of the region, the
+#   other point is in the bottom half. The more intense values in the map show
+#   which areas' activity are more correlated with the black point.
+
+function: "activity"
+region_points_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full5_atlas_brain/dlc_output/region_points_3.pkl"
+image_file: "/Users/christian/Documents/summer2023/matlab/my_data/full5/02_awake_8x8_30hz_28000fr_FR30Hz_BPF1-5Hz_GSR_DFF0-G4-fr1-28000.raw"
+still_image_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full5/atlas_brain/0.png"
+image_width: 128
+image_height: 128
+mat_property: null
+mat_transpose_axes: null
+save_dir: "/Users/christian/Documents/summer2023/MesoNet/data/full5_2000"
+n_frames: 2000
+use_com: false
+square_com: false
+highlights: [0, 40]
