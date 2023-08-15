@@ -60,7 +60,8 @@ def _plot_body(
 
 
 def _plot_mesoscale(
-        data: np.ndarray, left: int, every: int, frames_of_interest: List[int]):
+        data: np.ndarray, left: int, every: int, frames_of_interest: List[int],
+        mask: np.ndarray):
     """The data argument is a NumPy array with shape
 
     (
@@ -84,6 +85,8 @@ def _plot_mesoscale(
             axes.set_axis_off()
             axes.set_title(title)
             axes.imshow(data[i][j], vmin=-1.0, vmax=1.0)
+            if mask is not None:
+                axes.imshow(mask, alpha=0.3, vmin=-1.0, vmax=1.0)
 
     mean_data = np.mean(data, axis=0)
     for i, mean_image in enumerate(mean_data):
@@ -92,6 +95,8 @@ def _plot_mesoscale(
         axes.set_axis_off()
         axes.set_title(f"{relative_frame}")
         axes.imshow(mean_image, vmin=-1.0, vmax=1.0)
+        if mask is not None:
+            axes.imshow(mask, alpha=0.3, vmin=-1.0, vmax=1.0)
 
     figure.subplots_adjust(
             left=0.0, right=1.0, bottom=0.0, top=1.0, wspace=0.05, hspace=0.0)
@@ -151,6 +156,7 @@ def main(args: argparse.Namespace):
     body_data = []
     mesoscale_data = []
     pupillometry_data = []
+    mask = collection._plotters[2]._mask  # Get the mask... at all costs.
 
     for frame_of_interest in args.frames_of_interest:
         data_segments = collection.update(
@@ -159,6 +165,10 @@ def main(args: argparse.Namespace):
 
         pupil_data.append(data_segments[0])
         body_data.append(data_segments[1])
+        # mesoscale = data_segments[2]
+        # mesoscale = np.expand_dims(mesoscale, axis=-1)
+        # mesoscale = np.tile(mesoscale, reps=(1, 1, 1, 3))
+        # mesoscale_data.append(mesoscale)
         mesoscale_data.append(data_segments[2])
         pupillometry_data.append(data_segments[3])
 
@@ -173,7 +183,7 @@ def main(args: argparse.Namespace):
             args.frames_of_interest)
     _plot_mesoscale(
             mesoscale_data, args.frames_left, args.skip_every,
-            args.frames_of_interest)
+            args.frames_of_interest, mask)
     _plot_pupillometry(
             pupillometry_data, args.frames_left, args.skip_every,
             args.frames_of_interest)
