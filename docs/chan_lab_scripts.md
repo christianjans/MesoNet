@@ -150,7 +150,7 @@ the [event_highlighter.yaml](/mesonet/chan_lab/configs/event_highlighter.yaml)
 configuration file for an example configuration and more details about what goes
 into a configuration.
 
-<img src="/docs/_static/event_highlighter.png" alt="event highlighter image" width="1024>
+<img src="/docs/_static/event_highlighter.png" alt="event highlighter image" width="1024">
 
 ## [`activity_analyzer.py`](/mesonet/chan_lab/activity_analyzer.py)
 
