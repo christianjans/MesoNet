@@ -127,10 +127,6 @@ Finally, a red `x` marks the pixel with the highest value in the entire image.
 
 <img src="/docs/_static/sensory_map.png" alt="sensory map image" width="512"/>
 
-## [`event_analyzer.py`](/mesonet/chan_lab/event_analyzer.py)
-
-***
-
 ## [`event_analyzer_app.py`](/mesonet/chan_lab/event_analyzer_app.py)
 
 This script generates a GUI application that the user can interact with to
