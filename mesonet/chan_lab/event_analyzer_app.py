@@ -65,7 +65,7 @@ class View(ttk.Frame):
         )
         self.slider_label.config(text=label_text)
 
-        self.collection.update_plots(self.slider_value - 1)
+        self.collection.update(self.slider_value - 1)
 
 
 class App(tk.Tk):

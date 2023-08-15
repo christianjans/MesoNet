@@ -6,7 +6,7 @@ import numpy as np
 
 from mesonet.chan_lab.helpers.utils import config_to_namespace
 from mesonet.chan_lab.helpers.plotting import (
-    args_from_yaml, PlotterCollection
+    args_from_yaml, EventHighlighter
 )
 
 
@@ -143,11 +143,9 @@ def main(args: argparse.Namespace):
     mesoscale_args = args_from_yaml(args.mesoscale)
     pupillometry_args = args_from_yaml(args.pupillometry)
 
-    collection = PlotterCollection(
-            canvas=None, figure=None,
+    collection = EventHighlighter(
             plotter_args=[pupil_args, body_args, mesoscale_args,
-                          pupillometry_args],
-            rows=1)
+                          pupillometry_args])
 
     pupil_data = []
     body_data = []
@@ -155,10 +153,10 @@ def main(args: argparse.Namespace):
     pupillometry_data = []
 
     for frame_of_interest in args.frames_of_interest:
-        data_segments = collection.data_segments(
+        data_segments = collection.update(
                 frame_of_interest, args.frames_left, args.frames_right,
                 args.skip_every)
-        
+
         pupil_data.append(data_segments[0])
         body_data.append(data_segments[1])
         mesoscale_data.append(data_segments[2])

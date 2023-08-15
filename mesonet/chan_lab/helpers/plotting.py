@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, List
 
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -65,11 +65,11 @@ class SeriesPlotter:
     def n_frames(self) -> int:
         raise NotImplementedError
 
-    def frames(self,
-               frame_index: int,
-               left: int = 0,
-               right: int = 0,
-               every: int = 1):
+    def data_segment(self,
+                     frame_index: int,
+                     left: int = 0,
+                     right: int = 0,
+                     every: int = 1) -> np.ndarray:
         raise NotImplementedError
 
     def update(self, frame_index: int, figure: Figure, axes: Axes,
@@ -78,29 +78,48 @@ class SeriesPlotter:
 
 
 class PupillometryPlotter(SeriesPlotter):
+    WINDOW = 100
+
     def __init__(self, args: PupillometryPlotterArgs):
         super().__init__(args.filename, args.event_frames, args.title)
         self._data = scipy.io.loadmat(self.filename)["R"]
+        self._start_frame = self._data[0, 0]
+        self._delta_frame = self._data[1, 0] - self._start_frame
         self._axes_data = None
 
     @property
     def n_frames(self) -> int:
         return int(max(self._data[:, 0]))
 
+    def data_segment(self,
+                     frame_index: int,
+                     left: int = 0,
+                     right: int = 0,
+                     every: int = 1) -> np.ndarray:
+        left_index = int((frame_index - left * every) // self._delta_frame)
+        right_index = int((frame_index + right * every) // self._delta_frame)
+
+        frames = [
+            np.array([self._data[i, 0], self._data[i, 1]])
+            for i in range(left_index, right_index + 1, every)
+        ]
+        frames = np.array(frames)
+        frames = frames.T
+        return frames
+
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
-        # TODO
-        frame_index = frame_index // 2
+        frame_index = int(frame_index // self._delta_frame)
         print(f"{self.title} frame: {int(self._data[frame_index, 0])}")
-        WINDOW = 100
-        visible_x = self._data[(frame_index - WINDOW):(frame_index + WINDOW + 1), 0]
-        visible_y = self._data[(frame_index - WINDOW):(frame_index + WINDOW + 1), 1]
+        visible_x = self._data[(frame_index - PupillometryPlotter.WINDOW):(frame_index + PupillometryPlotter.WINDOW + 1), 0]
         # start_frame, end_frame = visible_x[0], visible_x[-1]
         # left_delta, right_delta = int(start_frame - (frame_index + 1)), int(end_frame - (frame_index + 1))
 
         # print(f"left_delta = {left_delta}, right_delta = {right_delta}")
-        left, right = int(frame_index - WINDOW), int(frame_index + WINDOW + 1)
-        x = [int(2 * i) for i in range(left - frame_index, right - frame_index)]
+        left = int(frame_index - PupillometryPlotter.WINDOW)
+        right = int(frame_index + PupillometryPlotter.WINDOW)
+        x = [int(self._delta_frame * i)
+             for i in range(left - frame_index, right - frame_index + 1)]
 
         if not started:
             self._axes_data = axes.plot([])[0]
@@ -144,6 +163,21 @@ class ImagePlotter(SeriesPlotter):
     def n_frames(self) -> int:
         return self._image_series.n_frames
 
+    def data_segment(self,
+                     frame_index: int,
+                     left: int = 0,
+                     right: int = 0,
+                     every: int = 1) -> np.ndarray:
+        left_index = frame_index - left * every
+        right_index = frame_index + right * every
+
+        frames = [
+            self._image_series.get_frame(i)
+            for i in range(left_index, right_index + 1, every)
+        ]
+        frames = np.array(frames)
+        return frames
+
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
         print(f"{self.title} frame: {frame_index}")
@@ -175,6 +209,21 @@ class VideoPlotter(SeriesPlotter):
     @property
     def n_frames(self) -> int:
         return self._image_series.n_frames
+
+    def data_segment(self,
+                     frame_index: int,
+                     left: int = 0,
+                     right: int = 0,
+                     every: int = 1) -> np.ndarray:
+        left_index = frame_index - left * every
+        right_index = frame_index + right * every
+
+        frames = [
+            self._image_series.get_frame(i)
+            for i in range(left_index, right_index + 1, every)
+        ]
+        frames = np.array(frames)
+        return frames
 
     def update(self, frame_index: int, figure: Figure, axes: Axes,
                started: bool):
@@ -215,7 +264,74 @@ def args_from_yaml(yaml_dict: Dict[str, Any]) -> PlotterArgs:
         raise ValueError(f"Invalid type: `{yaml_dict['type']}`")
 
 
-class PlotterCollection:
+class Collection:
+    PLOT_FONT_SIZE = 80
+
+    def __init__(self, plotter_args: Iterable[PlotterArgs]):
+        self._plotters = [_plotter_from_args(args) for args in plotter_args]
+        self._reference_event_frames = self._plotters[0].event_frames
+        self._min_frame_index = self._reference_event_frames.min
+        self._max_frame_index = self._reference_event_frames.max
+
+    @property
+    def min_frame_index(self) -> int:
+        return self._min_frame_index
+    
+    @property
+    def max_frame_index(self) -> int:
+        return self._max_frame_index
+
+    def update(self, frame_index: int, *args, **kwargs) -> Any:
+        raise NotImplementedError
+
+    def _relative_frame_index(self,
+                              frame_index: int,
+                              event_frames: EventFrames) -> int:
+        return event_frames.equivalent_frame(
+                frame_index, self._reference_event_frames)
+
+
+class EventHighlighter(Collection):
+    PLOT_FONT_SIZE = 80
+
+    def __init__(self, plotter_args: Iterable[PlotterArgs]):
+       super().__init__(plotter_args)
+
+    @property
+    def min_frame_index(self) -> int:
+        return self._min_frame_index
+
+    @property
+    def max_frame_index(self) -> int:
+        return self._max_frame_index
+
+    def update(self,
+               frame_index: int,
+               left: int = 0,
+               right: int = 0,
+               every: int = 1) -> Any:
+        assert frame_index >= self._min_frame_index, (
+            f"frame {frame_index} must be >= min frame index "
+            f"{self._min_frame_index}"
+        )
+        assert frame_index <= self._max_frame_index, (
+            f"frame {frame_index} must be <= max frame index "
+            f"{self._max_frame_index}"
+        )
+
+        frames = []
+        for plotter in self._plotters:
+            equivalent_frame = self._relative_frame_index(
+                    frame_index, plotter.event_frames)
+            frames.append(plotter.data_segment(equivalent_frame,
+                                               left,
+                                               right,
+                                               every))
+
+        return frames
+
+
+class PlotterCollection(Collection):
     PLOT_FONT_SIZE = 80
 
     def __init__(self,
@@ -223,6 +339,8 @@ class PlotterCollection:
                  figure: Figure,
                  plotter_args: Iterable[PlotterArgs],
                  rows: int):
+        super().__init__(plotter_args)
+
         matplotlib.rcParams.update({
             "font.size": PlotterCollection.PLOT_FONT_SIZE
         })
@@ -238,28 +356,13 @@ class PlotterCollection:
             self._figure.add_subplot(self._n_rows, self._n_columns, i + 1)
             for i in range(self._n_plots)
         ]
-        self._plotters = [_plotter_from_args(args) for args in plotter_args]
-
-        self._reference_event_frames = self._plotters[0].event_frames
-
-        self._min_frame_index = self._reference_event_frames.min
-        self._max_frame_index = self._reference_event_frames.max
+        self._figure.subplots_adjust(wspace=0.1, hspace=0.1)
 
         # Used for blitting.
         self._started = False
         self._plot_backgrounds = []
 
-        self._figure.subplots_adjust(wspace=0.1, hspace=0.1)
-
-    @property
-    def min_frame_index(self) -> int:
-        return self._min_frame_index
-
-    @property
-    def max_frame_index(self) -> int:
-        return self._max_frame_index
-
-    def update_plots(self, frame_index: int):
+    def update(self, frame_index: int) -> Any:
         assert frame_index >= self._min_frame_index
         assert frame_index <= self._max_frame_index
 
@@ -293,19 +396,3 @@ class PlotterCollection:
                 self._canvas.blit(axes.bbox)
 
             self._canvas.flush_events()
-
-    def _relative_frame_index(self,
-                              frame_index: int,
-                              event_frames: EventFrames) -> int:
-        return event_frames.equivalent_frame(
-                frame_index, self._reference_event_frames)
-
-        reference_time = self._reference_offset / self._reference_fps
-        frame_time = frame_index / self._reference_fps
-        start_time = offset / self._reference_fps
-        diff_time = reference_time + frame_time - start_time
-
-        relative_frame_index = diff_time * fps
-        relative_frame_index = int(round(relative_frame_index))
-
-        return relative_frame_index
