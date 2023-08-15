@@ -8,8 +8,16 @@ To begin, start by [installing MesoNet](#installation). The recommended install
 is using the Anaconda (conda) environment to install DeepLabCut and the other
 requirements for MesoNet.
 
-Once installation is complete, MesoNet can be used with the scripts in the
-[mesonet/chan_lab/](/mesonet/chan_lab/) directory. See the
+If pupillometry is also required, download the MATLAB code available at:
+https://github.com/christianjans/pupillometry_matlab.
+
+Often, the results of the pupillometry code are analyzed in conjunction with
+the processed mesoscale images. If this is the case, follow the instructions in
+the pupillometry code to produce cleaned pupil size data for the desired
+dataset. Then, come back to this repository and check out its features.
+
+Once installation of this repository is complete, MesoNet can be used with the
+scripts in the [mesonet/chan_lab/](/mesonet/chan_lab/) directory. See the
 [Chan Lab scripts](/docs/chan_lab_scripts.md) for more details.
 
 # MesoNet
