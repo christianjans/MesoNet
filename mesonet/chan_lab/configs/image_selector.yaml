@@ -1,0 +1,27 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/image_selector.py --config mesonet/chan_lab/configs/image_selector.yaml
+#
+# Arguments
+# =========
+# - image_file: The path to the TIF image file.
+# - images_to_save: The zero-indexed image numbers of the images to save.
+# - save_dir: The directory in which the selected images will be saved.
+# - image_width: The width of the images in the TIF image file.
+# - image_height: The height of the images in the TIF image file.
+# - padding: The number of pixels of padding to add around the saved image.
+# - brightness: The brightness adjustment applied to the image. The value of 1.0
+#   indicates that no brightness adjustment is applied. Higher values increase
+#   the brightness.
+#
+# Outputs
+# =======
+# The selected images in PNG format, saved in the given save directory.
+
+image_file: "/Users/christian/Documents/summer2023/matlab/my_data/full3/02_awake_8x8_30hz_28000fr.tif"
+images_to_save: [0, 1555, 4000, 12000, 16000, 20000, 24000]
+save_dir: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full3_1.0/atlas_brain"
+image_width: 128
+image_height: 128
+padding: 0
+brightness: 1.0

@@ -18,6 +18,7 @@ import imageio
 import imutils
 import scipy
 import pylab
+import pickle
 from PIL import Image
 import pandas as pd
 from tensorflow.keras import backend as k
@@ -113,6 +114,11 @@ def saveResult(save_path, npyfile, flag_multi_class=False, num_class=2):
             if flag_multi_class
             else item[:, :, 0]
         )
+
+        # NOTE: Added by Christian.
+        img = Image.fromarray((img * 255.0).astype(np.uint8))
+        img = np.array(img)
+
         io.imsave(os.path.join(save_path, "{}.png".format(i)), img)
 
 
@@ -472,6 +478,9 @@ def applyMask(
             orig_list_labels_right = []
             # unique_regions = (np.unique(atlas_label)).tolist()
             # unique_regions = [e for e in unique_regions if e.is_integer()]
+
+            # These are the colours of the different regions in
+            # atlases/diff_colour_regions/atlas.csv.
             unique_regions = [
                 -275,
                 -268,
@@ -518,6 +527,10 @@ def applyMask(
                 400,
             ]
             cnts_orig = []
+
+            regions = []  # NOTE: Added by Christian.
+            region_points = {}  # NOTE: Added by Christian.
+
             # Find contours in original aligned atlas
             if atlas_to_brain_align and not original_label:
                 np.savetxt(
@@ -549,11 +562,13 @@ def applyMask(
                     if len(cnt_for_idx) >= 1:
                         cnts_orig.append(cnt_for_idx)
                         labels_from_region.append(region_idx)
+                        regions.append(region)  # NOTE: Added by Christian.
             else:
                 cnts_orig = cv2.findContours(
                     atlas_bw.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
                 )
                 cnts_orig = imutils.grab_contours(cnts_orig)
+
             if not use_dlc:
                 cnts_orig, hierarchy = cv2.findContours(
                     atlas_bw.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
@@ -577,6 +592,17 @@ def applyMask(
 
                 if not original_label and atlas_to_brain_align:
                     label_to_use = unique_regions.index(labels_from_region[num_label])
+
+                    # NOTE: Added by Christian. Associate all non-zero pixels in
+                    #  the current region to the current label.
+                    region_points.update(
+                        {
+                            (x, y): label_to_use
+                            for y, x  # In the array, we have (y, x); in coordinates, we want (x, y).
+                            in zip(*np.where(regions[num_label] > 0))
+                        }
+                    )
+
                     (text_width, text_height) = cv2.getTextSize(
                         str(label_to_use), cv2.FONT_HERSHEY_SIMPLEX, 0.4, thickness=1
                     )[0]
@@ -627,6 +653,12 @@ def applyMask(
                         )
                     )
                 orig_list.sort()
+
+            # NOTE: Added by Christian.
+            with open(f"region_points_{i}.pkl", "wb") as f:
+                print(f"Saving region points {i}")
+                pickle.dump(region_points, f)
+
             orig_list_labels_sorted_left = sorted(
                 orig_list_labels_left, key=lambda t: t[0], reverse=True
             )

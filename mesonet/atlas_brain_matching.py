@@ -57,7 +57,7 @@ def coords_to_mat(
             x_pt = pt[0]
             y_pt = pt[1]
             pt_adj = [landmark, x_pt - x_bregma, y_pt - y_bregma]
-            pt_adj_to_mat = np.array(pt_adj, dtype=np.object)
+            pt_adj_to_mat = np.array(pt_adj, dtype=object)
             if not os.path.isdir(os.path.join(output_mask_path, "mat_coords")):
                 os.mkdir(os.path.join(output_mask_path, "mat_coords"))
             scipy.io.savemat(
@@ -77,7 +77,7 @@ def sensory_to_mat(sub_dlc_pts, bregma_pt, i, output_mask_path):
         x_pt = pt[0]
         y_pt = pt[1]
         pt_adj = [landmark, x_pt - x_bregma, y_pt - y_bregma]
-        pt_adj_to_mat = np.array(pt_adj, dtype=np.object)
+        pt_adj_to_mat = np.array(pt_adj, dtype=object)
         if not os.path.isdir(os.path.join(output_mask_path, "mat_coords")):
             os.mkdir(os.path.join(output_mask_path, "mat_coords"))
         scipy.io.savemat(
@@ -376,6 +376,11 @@ def atlasBrainMatch(
                         os.path.join(sensory_img_dir, img_name, file_im)
                     )
                     sensory_im = trans.resize(sensory_im, (512, 512))
+
+                    # NOTE: Added by Christian.
+                    sensory_im = Image.fromarray((sensory_im * 255.0).astype(np.uint8))
+                    sensory_im = np.array(sensory_im)
+
                     io.imsave(
                         os.path.join(sensory_img_dir, img_name, file_im), sensory_im
                     )
@@ -419,10 +424,10 @@ def atlasBrainMatch(
         y_coord_flat = y_coord_flat[landmark_arr]
         dlc_list = []
         atlas_list = []
-        for (coord_x, coord_y) in zip(x_coord_flat, y_coord_flat):
+        for (coord_x, coord_y) in zip(x_coord_flat, y_coord_flat):  # Obtain the DLC landmark coordinates
             dlc_coord = (coord_x, coord_y)
             dlc_list.append(dlc_coord)
-        for coord_atlas in atlas_arr:
+        for coord_atlas in atlas_arr:  # Obtain the atlas landmark coordinates
             atlas_coord = (coord_atlas[0], coord_atlas[1])
             atlas_list.append(atlas_coord)
         atlas_list = [atlas_list[i] for i in landmark_arr]
@@ -435,7 +440,7 @@ def atlasBrainMatch(
             np.asarray(atlas_list) - np.asarray((im.shape[0] / 2, im.shape[1] / 2))
         )
         pts_avg_dist = [np.mean(v) for v in pts_dist]
-        bregma_index = np.argmin(np.asarray(pts_avg_dist))
+        bregma_index = np.argmin(np.asarray(pts_avg_dist))  # Get the index of the bregma landmark
 
         for j in landmark_indices:
             sub_dlc_pts.append([x_coord_flat[j], y_coord_flat[j]])
@@ -481,7 +486,7 @@ def atlasBrainMatch(
             im = np.uint8(im)
             br = cv2.imread(br)
             br = np.uint8(br)
-            br = cv2.resize(br, (512, 512))
+            br = cv2.resize(br, (512, 512))  # `br` is the (resized) brain image
         else:
             # FOR ALIGNING BRAIN TO ATLAS
             if ".png" in br:
@@ -705,7 +710,7 @@ def atlasBrainMatch(
                 warp_coords_right = cv2.getAffineTransform(atlas_pts_right, dlc_pts_right)
                 warp_coords_brain_atlas_left = cv2.getAffineTransform(dlc_pts_left, atlas_pts_left)
                 warp_coords_brain_atlas_right = cv2.getAffineTransform(dlc_pts_right, atlas_pts_right)
-                if atlas_to_brain_align:
+                if atlas_to_brain_align: # Transform the masked regions.
                     atlas_warped_left = cv2.warpAffine(
                         im_left, warp_coords_left, im_final_size
                     )
@@ -713,10 +718,10 @@ def atlasBrainMatch(
                         im_right, warp_coords_right, im_final_size
                     )
                     atlas_warped = cv2.bitwise_or(atlas_warped_left, atlas_warped_right)
-                    ret, atlas_warped = cv2.threshold(
+                    ret, atlas_warped = cv2.threshold(  # If pixel > 5, set to 0. Otherwise, set to 255.
                         atlas_warped, 5, 255, cv2.THRESH_BINARY_INV
                     )
-                    if not original_label:
+                    if not original_label:  # Transform the labelled (coloured) regions.
                         atlas_label_left = cv2.warpAffine(
                             atlas_label_mask_left, warp_coords_left, im_final_size
                         )
@@ -829,7 +834,7 @@ def atlasBrainMatch(
                 img_rgba = img_edited.convert("RGBA")
                 data = img_rgba.getdata()
                 for pixel in data:
-                    if pixel[0] == 255 and pixel[1] == 255 and pixel[2] == 255:
+                    if pixel[0] == 255 and pixel[1] == 255 and pixel[2] == 255:  # Treat white as transparent.
                         new_data.append((pixel[0], pixel[1], pixel[2], 0))
                     else:
                         new_data.append(pixel)
@@ -952,6 +957,10 @@ def atlasBrainMatch(
             dst = np.uint8(dst)
 
         if use_dlc:
+
+            # NOTE: Added by Christian.
+            atlas_mask_warped = atlas_mask_warped.astype(np.uint8)
+
             if atlas_to_brain_align:
                 io.imsave(mask_warped_path, atlas_mask_warped)
             else:
@@ -985,6 +994,9 @@ def atlasBrainMatch(
             vxm_template_list.append(vxm_template)
             io.imsave(vxm_template_output_path, vxm_template_list[n])
 
+        # NOTE: Added by Christian.
+        dst = dst.astype(np.uint8)
+
         if atlas_to_brain_align:
             io.imsave(atlas_path, dst)
             br_list.append(br)
@@ -998,7 +1010,7 @@ def atlasBrainMatch(
         if atlas_to_brain_align:
             if original_label:
                 atlas_label = []
-            atlas_label = atlas_to_mask(
+            atlas_label = atlas_to_mask(  # Apply atlas to mask generated by u-net.
                 atlas_path,
                 mask_dir,
                 mask_warped_path,
@@ -1033,6 +1045,11 @@ def atlasBrainMatch(
             flow_path_after = os.path.join(output_mask_path, "{}_flow.npy".format(str(n_post)))
             np.save(flow_path_after, flow_post)
             output_path_after = os.path.join(output_mask_path, "{}_output_img.png".format(str(n_post)))
+
+            # NOTE: Added by Christian.
+            output_img = Image.fromarray((output_img * 255.0).astype(np.uint8))
+            output_img = np.array(output_img)
+
             io.imsave(output_path_after, output_img)
             if not exist_transform:
                 dst_gray = cv2.cvtColor(atlas, cv2.COLOR_BGR2GRAY)

@@ -1,0 +1,26 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/interactive_image.py --config mesonet/chan_lab/configs/interactive_image.yaml
+#
+# To save a custom region, ensure that the save_file argument specifies a path
+# on your system, then start the program and click and drag on the pixels you
+# want to include in your region.
+#
+# Arguments
+# =========
+# - image_file: The image file to show.
+# - image_width: The width of the image file.
+# - image_height: The height of the image file.
+# - region_points_file: The region points to determine the regions.
+# - save_file: The file used to save the region points. This can be left as null
+#   if you do not want to create a custom region.
+#
+# Outputs
+# =======
+# A region points file in the provided save file.
+
+image_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full3_1.5/atlas_brain/0.png"
+image_width: 128
+image_height: 128
+region_points_file: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full3_1.5_atlas_brain/dlc_output/region_points_0.pkl"
+save_file: null

@@ -1,0 +1,29 @@
+# How to use
+# ==========
+# $ python mesonet/chan_lab/pipelines.py --config mesonet/chan_lab/configs/pipelines.yaml
+#
+# Arguments
+# =========
+# - pipeline: MesoNet comes with five different pipelines to accomplish
+#   different tasks using the trained neural networks. Currently, only the
+#   "atlas to brain" pipeline is implemented in pipelines.py so the only
+#   available value for this argument is "atlas_brain"
+# - input_dir: The directory containing the PNG images for the network to
+#   segment. This is most likely the save_dir argument of te image_selector.py
+#   script.
+# - output_dir: The directory to output the segmentation data.
+# - use_unet: Whether to use the network's U-Net. The U-Net network will attempt
+#   to find the cortical areas of the brain and mask the areas of the
+#   segmentation which it deems are not part of the cortex. If the U-Net is not
+#   used, the segmentation will only be based on the landmarks of the cortex
+#   predicted by the DeepLabCut network.
+#
+# Outputs
+# =======
+# The segementation information, including the masks, segmented images, and
+# regions, in the provided output directory argument.
+
+pipeline: "atlas_brain"
+input_dir: "/Users/christian/Documents/summer2023/MesoNet/mesonet_inputs/full3_1.5/atlas_brain/"
+output_dir: "/Users/christian/Documents/summer2023/MesoNet/mesonet_outputs/full3_atlas_brain"
+use_unet: true

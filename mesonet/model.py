@@ -98,7 +98,7 @@ def unet(pretrained_weights=None, input_size=(512, 512, 1)):
     )(conv9)
     conv10 = Conv2D(1, 1, activation="sigmoid")(conv9)
 
-    model = Model(input=inputs, output=conv10)
+    model = Model(inputs=inputs, outputs=conv10)
 
     model.compile(
         optimizer=Adam(lr=1e-4), loss="binary_crossentropy", metrics=["accuracy"]
