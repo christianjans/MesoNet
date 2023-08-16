@@ -1,6 +1,6 @@
 # How to use
 # ==========
-# $ python mesonet/chan_lab/event_highlighter.py --config mesonet/chan_lab/configs/event_highlighter.py
+# $ python mesonet/chan_lab/event_highlighter.py --config mesonet/chan_lab/configs/event_highlighter.yaml
 #
 # Arguments
 # =========
