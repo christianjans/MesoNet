@@ -12,7 +12,7 @@ import scipy
 
 from mesonet.chan_lab.helpers.image_series import ImageSeriesCreator
 from mesonet.chan_lab.helpers.utils import config_to_namespace
-from mesonet.utils import reorder_matrix
+from mesonet.chan_lab.helpers.utils import reorder_matrix
 
 REGION_POINTS_WIDTH_MAX = 512
 REGION_POINTS_HEIGHT_MAX = 512
