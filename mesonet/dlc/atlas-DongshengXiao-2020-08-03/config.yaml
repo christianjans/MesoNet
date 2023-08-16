@@ -6,7 +6,7 @@ multianimalproject:
 identity:
 
     # Project path (change when moving around)
-project_path: /repo/mesonet/dlc/atlas-DongshengXiao-2020-08-03
+project_path: /Users/christian/Documents/summer2023/MesoNet/mesonet/dlc/atlas-DongshengXiao-2020-08-03
 
     # Annotation data set configuration (and individual video cropping parameters)
 video_sets:
@@ -22,8 +22,6 @@ bodyparts:
 - r7
 - r8
 - r9
-
-    # Fraction of video to start/stop when extracting frames for labeling/refinement
 
     # Fraction of video to start/stop when extracting frames for labeling/refinement
 
