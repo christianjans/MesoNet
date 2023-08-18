@@ -86,7 +86,7 @@ def _plot_mesoscale(
             axes.set_title(title)
             axes.imshow(data[i][j], vmin=-1.0, vmax=1.0)
             if mask is not None:
-                axes.imshow(mask, alpha=0.3, vmin=-1.0, vmax=1.0)
+                axes.imshow(mask, alpha=0.2, vmin=-1.0, vmax=1.0)
 
     mean_data = np.mean(data, axis=0)
     for i, mean_image in enumerate(mean_data):
@@ -96,7 +96,7 @@ def _plot_mesoscale(
         axes.set_title(f"{relative_frame}")
         axes.imshow(mean_image, vmin=-1.0, vmax=1.0)
         if mask is not None:
-            axes.imshow(mask, alpha=0.3, vmin=-1.0, vmax=1.0)
+            axes.imshow(mask, alpha=0.2, vmin=-1.0, vmax=1.0)
 
     figure.subplots_adjust(
             left=0.0, right=1.0, bottom=0.0, top=1.0, wspace=0.05, hspace=0.0)
