@@ -55,7 +55,7 @@ as adapted in [zhixuhao](https://github.com/zhixuhao)'s [unet repository](https:
 We recommend using their supplied Anaconda environments.
 2. Activate the DeepLabCut environment (as described above, usually `activate DEEPLABCUT` on Windows or 
 `conda activate DEEPLABCUT` on Linux/Mac. 
-3. Clone this git repository: `git clone https://github.com/bf777/MesoNet.git`
+3. Clone this git repository: `git clone https://github.com/christianjans/MesoNet.git`
 * NOTE: If you are on Windows, please clone the repository to a location on `C://` as the git repository search function does not currently support other drives.
 5. Enter the git repository folder using `cd mesonet`, then run `python setup.py install` to install additional
 dependencies for MesoNet (installation via pip coming soon!)
